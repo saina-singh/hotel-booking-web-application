@@ -1,0 +1,2 @@
+End-user dashboard url: https://app.moqups.com/unsaved/c8ceef0f/edit/page/ad64222d5
+Admin dashboard url: https://app.moqups.com/unsaved/b35fe5fc/edit/page/ad64222d5

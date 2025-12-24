@@ -1,0 +1,119 @@
+/*Universal Selector*/
+* {
+  margin: 0px;
+  padding: 0px;
+}
+
+/* ID Selector*/
+#wrapper {
+  width: 1320px;
+  min-height: 1500px;
+  background-color: aliceblue;
+  margin: auto auto;
+}
+
+.row {
+  min-width: 5px;
+}
+
+.col100 {
+  width: 100%;
+}
+
+.col75 {
+  width: 75%;
+  float: left;
+}
+
+.col50 {
+  width: 50%;
+  float: left;
+}
+
+.col25 {
+  width: 25%;
+  float: left;
+}
+
+.clear {
+  clear: both;
+}
+
+#topmenu {
+  width: 100%;
+  min-height: 50px;
+  background-color: #000000;
+  border: 1px solid #ffffff;
+  border-radius: 0px 0px 30px 30px;
+}
+
+#topmenu ul {
+  list-style-type: none;
+  ;
+}
+
+#topmenu ul li {
+  display: inline-block;
+  margin-left: 20px;
+  padding: 3px;
+  color: #ffffff;
+}
+
+#social {
+  width: 40px;
+  min-height: 120px;
+  background-color: #ff0000;
+  position: fixed;
+  top: 150px;
+  right: 0px;
+}
+
+#social ul {
+  list-style-type: none;
+}
+
+#social ul li {
+  font-size: 20px;
+  color: #ffffff;
+  margin: 5px;
+}
+
+/* making images responsive by img type defination */
+img {
+  width: 100%;
+  height: auto;
+}
+
+/* for Tablet */
+@media only screen and (max-width: 960px) {
+  body {
+    background-color: aqua;
+  }
+
+  #wrapper {
+    width: 920px;
+  }
+
+  .colmd50 {
+    width: 50%;
+    float: left;
+  }
+
+
+}
+
+/* for Mobile */
+@media only screen and (max-width: 480px) {
+  body {
+    background-color: blueviolet;
+  }
+
+  #wrapper {
+    width: 450px;
+  }
+
+  .colsm100 {
+    width: 100%;
+  }
+
+}

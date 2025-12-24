@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Hotels</title>
+{% endblock %}
+
+{% block body %}
+
+<h3 class="fw-bold mt-5">Countries to travel</h3>
+
+<div class="row g-4 mt-2">
+  {% for c in cities %}
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <img src="{{ url_for('static', filename='images/default_hotel.jpg') }}" class="card-img-top">
+      <div class="card-body">
+        <h6>{{ c.city }}</h6>
+        <p class="fw-bold">${{ c.price }}</p>
+        <button class="btn btn-dark btn-sm">Read Now</button>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if not cities %}
+<p class="text-muted mt-3">No hotels available.</p>
+{% endif %}
+
+{% endblock %}

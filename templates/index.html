@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Home</title>
+{% endblock %}
+
+{% block body %}
+
+<div class="row align-items-center my-4 rounded hero-box">
+  <div class="col-md-6 text-white p-5">
+    <h1 class="fw-bold">
+      The right destination for you <br> and your family
+    </h1>
+    <p>
+      Creative taglines have the capability of capturing the attention of potential customers.
+    </p>
+    <button class="btn btn-dark">Start your search</button>
+  </div>
+</div>
+
+<!-- SEARCH BAR -->
+<div class="search-box shadow-sm p-4 rounded bg-white">
+  <div class="row g-3">
+    <div class="col-md-3">
+      <label>Location</label>
+      <input class="form-control" placeholder="Enter destination">
+    </div>
+    <div class="col-md-3">
+      <label>Check-In</label>
+      <input type="date" class="form-control">
+    </div>
+    <div class="col-md-3">
+      <label>Check-Out</label>
+      <input type="date" class="form-control">
+    </div>
+    <div class="col-md-2">
+      <label>People</label>
+      <input type="number" class="form-control">
+    </div>
+    <div class="col-md-1 d-flex align-items-end">
+      <button class="btn btn-dark w-100">Go</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

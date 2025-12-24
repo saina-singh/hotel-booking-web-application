@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Admin Dashboard</h1>
+
+<p>
+  Welcome, {{ session.username }}
+  <a href="{{ url_for('logout') }}">Logout</a>
+</p>
+
+<p><strong>Total Users:</strong> {{ total_users }}</p>
+
+<table border="1" cellpadding="10">
+  <tr>
+    <th>ID</th>
+    <th>Username</th>
+    <th>Email</th>
+    <th>Role</th>
+    <th>Status</th>
+  </tr>
+
+  {% for user in users %}
+  <tr>
+    <td>{{ user.id }}</td>
+    <td>{{ user.username }}</td>
+    <td>{{ user.email }}</td>
+    <td>{{ user.role }}</td>
+    <td>
+      {% if user.status == 1 %}
+      Active
+      {% else %}
+      Inactive
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+
+</table>
+{% endblock %}
+
+{% block head %}
+<title>Admin Dashboard</title>
+{% endblock %}

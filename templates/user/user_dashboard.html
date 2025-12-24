@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>User Dashboard</h1>
+
+<p>Welcome, {{session.username}} <a href="{{ url_for('logout') }}">Logout</a></p>
+
+<!--
+
+ # {{ url_for('static', filename='style.css') }}   
+-->
+
+{% endblock %}
+{% block head %}
+<title>HOme Pagesss</title>
+{% endblock %}

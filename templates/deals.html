@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Deals</title>
+{% endblock %}
+
+{% block body %}
+
+<!-- FEATURED DEALS -->
+<div class="container my-5">
+  <h3 class="fw-bold mb-4">Featured Deals</h3>
+
+  <div class="row g-4">
+    <div class="col-md-6">
+      <div class="p-4 bg-light rounded shadow-sm">
+        <h5>Summer Special</h5>
+        <p>Book early and get up to 30% discount on select hotels.</p>
+        <a href="{{ url_for('deals') }}" class="btn btn-dark btn-sm">View Deals</a>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="p-4 bg-light rounded shadow-sm">
+        <h5>Family Packages</h5>
+        <p>Special family room offers with added benefits.</p>
+        <a href="{{ url_for('deals') }}" class="btn btn-dark btn-sm">View Deals</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

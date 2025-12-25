@@ -1,0 +1,125 @@
+/* =========================
+   GLOBAL STYLES
+========================= */
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: #ffffff;
+  color: #222;
+}
+
+a {
+  text-decoration: none;
+  color: #000;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* =========================
+   BANNER SECTION
+========================= */
+
+.banner-section {
+  background-image: url("/static/images/hotel_banner.png");
+  background-size: cover;
+  background-position: center;
+  height: 440px;
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  padding: 0 12px;
+  /* aligns to container edges */
+}
+
+
+/* =========================
+   BANNER TEXT
+========================= */
+
+.banner-content {
+  position: absolute;
+  top: 45px;
+  /* 🔑 less space from top */
+  left: 0;
+  z-index: 2;
+}
+
+
+
+.booking-eyebrow {
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+/* =========================
+   SEARCH / BOOKING BOX
+========================= */
+
+.search-box.search-on-banner {
+  position: absolute;
+  left: 12px;
+  /* same as banner padding */
+  right: 12px;
+  /* same as banner padding */
+  bottom: 95px;
+
+  max-width: none;
+  /* allow it to match container width */
+  width: auto;
+
+  background: #fff;
+  border-radius: 22px;
+  padding: 10px 15px;
+  min-height: 140px;
+
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.15);
+  z-index: 5;
+}
+
+
+/* Labels */
+.search-box.search-on-banner label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* Inputs */
+.search-box.search-on-banner .form-control {
+  height: 52px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+}
+
+/* Button */
+.search-box.search-on-banner button {
+  height: 52px;
+  border-radius: 10px;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 768px) {
+  .banner-section {
+    height: 600px;
+  }
+
+  .banner-content {
+    top: 60px;
+    left: 25px;
+    right: 25px;
+  }
+
+  .search-box.search-on-banner {
+    bottom: 15px;
+    padding: 28px;
+    min-height: auto;
+  }
+}

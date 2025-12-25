@@ -1,7 +1,29 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+
+{% block head %}
+<title>About Us</title>
+{% endblock %}
 
 {% block body %}
-<h2>About Us</h2>
-<p>Welcome to World Hotels! We are dedicated to providing the best hotel experiences worldwide. Our platform helps you
-  discover, book, and enjoy amazing hotels with ease.</p>
+
+<!-- WHY CHOOSE US -->
+<div class="container my-5">
+  <div class="row text-center">
+    <div class="col-md-4">
+      <h5 class="fw-bold">Best Price Guarantee</h5>
+      <p class="text-muted">We offer competitive prices on all hotel bookings.</p>
+    </div>
+
+    <div class="col-md-4">
+      <h5 class="fw-bold">Easy Booking</h5>
+      <p class="text-muted">Simple and fast booking process with instant confirmation.</p>
+    </div>
+
+    <div class="col-md-4">
+      <h5 class="fw-bold">24/7 Support</h5>
+      <p class="text-muted">Our support team is always available to help you.</p>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

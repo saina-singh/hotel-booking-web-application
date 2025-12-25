@@ -13,18 +13,18 @@
   <div class="container-fluid px-5">
 
     <!-- NAVBAR -->
-    <div class="d-flex justify-content-between align-items-center py-3">
-      <h4 class="fw-bold">World Hotels</h4>
+    <div class="d-flex align-items-center py-3 flex-nowrap">
+      <h4 class="fw-bold mb-0">World Hotels</h4>
 
-
-      <div class="d-flex gap-3 align-items-center">
+      <div class="d-flex gap-3 align-items-center ms-auto flex-nowrap">
         <a href="{{ url_for('index') }}">Discover</a>
         <a href="{{ url_for('hotels') }}">Hotels</a>
         <a href="{{ url_for('gallery') }}">Gallery</a>
+        <a href="{{ url_for('deals') }}">Deals</a>
         <a href="{{ url_for('about') }}">About</a>
         <a href="{{ url_for('contact') }}">Contact</a>
 
-        {% if session.loggedin %}
+        {% if session.get('loggedin') %}
         <a class="btn btn-dark btn-sm" href="{{ url_for('logout') }}">Logout</a>
         {% else %}
         <a class="btn btn-outline-dark btn-sm" href="{{ url_for('register') }}">Register</a>
@@ -32,13 +32,34 @@
         {% endif %}
       </div>
     </div>
+  </div>
 
-    {% block body %}{% endblock %}
+  {% if endpoint in ['index', 'login', 'register'] %}
+  <div class="container my-4">
+    <img src="{{ url_for('static', filename='images/hotel_banner.png') }}" class="w-100 rounded-4"
+      style="height: 520px; object-fit: cover; object-position: right center;" alt="Hotel Banner">
+  </div>
+  {% endif %}
 
-    <hr>
-    <footer class="text-center text-muted py-3">
-      © 2025 WorldHotels.com — All Rights Reserved
-    </footer>
+
+
+  {% if not session.get('loggedin') %}
+  <div class="container my-5 text-center p-5 bg-dark text-white rounded">
+    <h3 class="fw-bold">Ready to plan your next trip?</h3>
+    <p class="mt-2">Sign up now and get exclusive deals and discounts.</p>
+    <a href="{{ url_for('register') }}" class="btn btn-light mt-3">
+      Register Now
+    </a>
+  </div>
+  {% endif %}
+
+
+  {% block body %}{% endblock %}
+
+  <hr>
+  <footer class="text-center text-muted py-3">
+    © 2025 WorldHotels.com — All Rights Reserved
+  </footer>
 
   </div>
 </body>

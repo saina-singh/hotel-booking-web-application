@@ -4,43 +4,121 @@
 <title>Home</title>
 {% endblock %}
 
+{% block banner %}
+<div class="container my-4">
+  <img src="{{ url_for('static', filename='images/hotel_banner.png') }}" class="w-100 rounded-4"
+    style="height: 520px; object-fit: cover; object-position: center;" alt="Hotel Banner">
+</div>
+{% endblock %}
+
 {% block body %}
 
-<div class="row align-items-center my-4 rounded hero-box">
-  <div class="col-md-6 text-white p-5">
-    <h1 class="fw-bold">
-      The right destination for you <br> and your family
-    </h1>
-    <p>
-      Creative taglines have the capability of capturing the attention of potential customers.
-    </p>
-    <button class="btn btn-dark">Start your search</button>
+{% if session.get('loggedin') %}
+
+<div class="container mt-2">
+
+  <!-- BANNER -->
+  <div class="banner-section">
+
+    <div class="container">
+
+      <div class="banner-section">
+        <div class="banner-content">
+          <h5 class="booking-eyebrow">Start booking now</h5>
+          <a href="{{ url_for('hotels') }}" class="btn btn-dark mt-2">Start your search</a>
+        </div>
+
+        <div id="search" class="search-box search-on-banner">
+          ... form ...
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- SEARCH BAR -->
+    <div id="search" class="search-box search-on-banner shadow bg-white rounded">
+      <form method="GET" action="{{ url_for('hotels') }}">
+        <div class="row g-4 align-items-end">
+          <div class="col-md-3">
+            <label>Location</label>
+            <input name="city" class="form-control" placeholder="Enter destination">
+          </div>
+          <div class="col-md-3">
+            <label>Check-In</label>
+            <input type="date" name="checkin" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <label>Check-Out</label>
+            <input type="date" name="checkout" class="form-control">
+          </div>
+          <div class="col-md-2">
+            <label>People</label>
+            <input type="number" name="people" class="form-control">
+          </div>
+          <div class="col-md-1">
+            <button class="btn btn-dark w-100">Go</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
   </div>
 </div>
 
-<!-- SEARCH BAR -->
-<div class="search-box shadow-sm p-4 rounded bg-white">
-  <div class="row g-3">
+<!-- POPULAR DESTINATIONS -->
+<div class="container my-5">
+  <h3 class="fw-bold mb-4">Popular Destinations</h3>
+
+  <div class="row g-4">
     <div class="col-md-3">
-      <label>Location</label>
-      <input class="form-control" placeholder="Enter destination">
+      <div class="card shadow-sm">
+        <img src="{{ url_for('static', filename='images/destination1.jpg') }}" class="card-img-top">
+        <div class="card-body">
+          <h6>London</h6>
+          <p class="text-muted">Starting from $200/night</p>
+        </div>
+      </div>
     </div>
+
     <div class="col-md-3">
-      <label>Check-In</label>
-      <input type="date" class="form-control">
+      <div class="card shadow-sm">
+        <img src="{{ url_for('static', filename='images/destination2.jpg') }}" class="card-img-top">
+        <div class="card-body">
+          <h6>Edinburgh</h6>
+          <p class="text-muted">Starting from $160/night</p>
+        </div>
+      </div>
     </div>
+
     <div class="col-md-3">
-      <label>Check-Out</label>
-      <input type="date" class="form-control">
+      <div class="card shadow-sm">
+        <img src="{{ url_for('static', filename='images/destination3.jpg') }}" class="card-img-top">
+        <div class="card-body">
+          <h6>Manchester</h6>
+          <p class="text-muted">Starting from $180/night</p>
+        </div>
+      </div>
     </div>
-    <div class="col-md-2">
-      <label>People</label>
-      <input type="number" class="form-control">
-    </div>
-    <div class="col-md-1 d-flex align-items-end">
-      <button class="btn btn-dark w-100">Go</button>
+
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <img src="{{ url_for('static', filename='images/destination4.jpg') }}" class="card-img-top">
+        <div class="card-body">
+          <h6>Oxford</h6>
+          <p class="text-muted">Starting from $170/night</p>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
+{% else %}
+
+<div class="container mt-4 text-center">
+  <h3 class="fw-bold">Welcome to World Hotels</h3>
+  <p class="text-muted">Please login or signup to start booking and explore destinations.</p>
+</div>
+
+{% endif %}
 {% endblock %}

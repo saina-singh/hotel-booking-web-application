@@ -29,6 +29,10 @@ app.config['MAIL_PASSWORD'] = 'zmrwibdkfscbsmts'
 app.config['MAIL_DEFAULT_SENDER'] = 'singhsaina11@gmail.com'
 mail=Mail(app)
 
+@app.context_processor
+def inject_endpoint():
+    return dict(endpoint=request.endpoint)
+
 #default route
 @app.route('/')
 def index():
@@ -47,6 +51,10 @@ def contact():
 @app.route('/gallery')
 def gallery():
     return render_template('gallery.html')
+
+@app.route('/deals')
+def deals():
+    return render_template("deals.html")
 
 
 @app.route('/hotels')

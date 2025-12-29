@@ -2,6 +2,10 @@ from flask import Flask, render_template, request, redirect, url_for, session, m
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import date, datetime, timedelta
+from dateutil.relativedelta import relativedelta
+from flask import flash
+from datetime import date
 
 app = Flask(__name__, template_folder='templates', static_folder='static', static_url_path='/')
 #secret key
@@ -174,18 +178,63 @@ def admin_dashboard():
 
 @app.route('/user/dashboard')
 def user_dashboard():
-    if session.get('loggedin') and session.get('role') == 'CUSTOMER':
-        cursor = db.cursor(dictionary=True)
-        cursor.execute("""
-            SELECT user_id, first_name, last_name, email
-            FROM users
-            WHERE user_id = %s
-        """, (session['user_id'],))
-        me = cursor.fetchone()
-        return render_template('user/user_dashboard.html', me=me)
+    if not (session.get('loggedin') and session.get('role') == 'CUSTOMER'):
+        return redirect(url_for('login'))
 
-    return redirect(url_for('login'))
+    cursor = db.cursor(dictionary=True)
 
+    # current user info
+    cursor.execute("""
+        SELECT user_id, first_name, last_name, email
+        FROM users
+        WHERE user_id = %s
+    """, (session['user_id'],))
+    me = cursor.fetchone()
+
+    # bookings + converted total in selected currency (uses latest rate <= today)
+    cursor.execute("""
+        SELECT
+          b.booking_id,
+          b.booking_code,
+          b.booking_status,
+          b.created_at,
+          b.check_in,
+          b.check_out,
+          b.currency_code,
+          b.total_gbp,
+          h.hotel_name,
+          c.name AS city,
+
+          xr.gbp_to_curr,
+          ROUND(b.total_gbp * xr.gbp_to_curr, 2) AS total_in_currency
+
+        FROM bookings b
+        JOIN hotels h ON h.hotel_id = b.hotel_id
+        JOIN cities c ON c.city_id = h.city_id
+
+        LEFT JOIN exchange_rates xr
+          ON xr.currency_code = b.currency_code
+         AND xr.rate_date = (
+            SELECT MAX(rate_date)
+            FROM exchange_rates
+            WHERE currency_code = b.currency_code
+              AND rate_date <= CURRENT_DATE()
+         )
+
+        WHERE b.user_id = %s
+        ORDER BY b.created_at DESC
+    """, (session['user_id'],))
+    bookings = cursor.fetchall()
+
+    cursor.close()
+
+    # If rate is missing, fall back to GBP display in template safely
+    for b in bookings:
+        if b.get("total_in_currency") is None:
+            b["total_in_currency"] = b["total_gbp"]
+            b["gbp_to_curr"] = 1.0
+
+    return render_template('user/user_dashboard.html', me=me, bookings=bookings)
 
 @app.route('/logout')
 def logout():
@@ -427,37 +476,125 @@ def room_details(hotel_id, room_code):
 
     return render_template("room_details.html", hotel=hotel, room=room)
 
+
 @app.route('/book/<int:hotel_id>', methods=['POST'])
 def book(hotel_id):
-    if not session.get("loggedin") or session.get("role") != "CUSTOMER":
-        return redirect(url_for("login"))
+    if not session.get('loggedin'):
+        return redirect(url_for('login'))
 
-    user_id = session["user_id"]
+    try:
+        room_type_id  = int(request.form.get('room_type_id'))
+        check_in_str  = request.form.get('check_in')
+        check_out_str = request.form.get('check_out')
+        rooms_qty     = int(request.form.get('rooms_qty', 1))
+        guests        = int(request.form.get('guests', 1))
+        currency_code = request.form.get('currency_code', 'GBP')
 
-    check_in = request.form.get("check_in")
-    check_out = request.form.get("check_out")
-    room_type_id = int(request.form.get("room_type_id"))
-    rooms_qty = int(request.form.get("rooms_qty"))
-    guests = int(request.form.get("guests"))
-    currency_code = request.form.get("currency_code", "GBP")
+        if not check_in_str or not check_out_str:
+            return "Missing dates", 400
 
-    cursor = db.cursor()
+        check_in  = datetime.strptime(check_in_str, "%Y-%m-%d").date()
+        check_out = datetime.strptime(check_out_str, "%Y-%m-%d").date()
 
-    # CALL sp_create_booking
-    args = [user_id, hotel_id, check_in, check_out, currency_code, 0, ""]
-    cursor.callproc("sp_create_booking", args)
+        today = date.today()
+        if check_in < today:
+            return "Check-in cannot be in the past.", 400
+        if check_out <= check_in:
+            return "Check-out must be after check-in.", 400
 
-    # after callproc, args updated
-    booking_id = args[5]
-    booking_code = args[6]
+        nights = (check_out - check_in).days
+        if nights > 30:
+            return "Stay cannot be more than 30 nights.", 400
 
-    # CALL sp_add_booking_room
-    cursor.callproc("sp_add_booking_room", [booking_id, room_type_id, rooms_qty, guests])
+        max_checkin = today + relativedelta(months=3)
+        if check_in > max_checkin:
+            return "Bookings can only be made up to 3 months in advance.", 400
 
-    db.commit()
+        cursor = db.cursor()
 
-    cursor.close()
-    return render_template("booking_confirm.html", booking_id=booking_id, booking_code=booking_code)
+        # 1) create booking
+        args = [
+            int(session['user_id']),
+            int(hotel_id),
+            check_in,
+            check_out,
+            currency_code,
+            0,      # OUT booking_id
+            ""      # OUT booking_code
+        ]
+        result = cursor.callproc("sp_create_booking", args)
 
+        # ✅ IMPORTANT: clear stored results
+        for r in cursor.stored_results():
+            r.fetchall()
+
+        booking_id = result[5]
+        booking_code = result[6]
+
+        # 2) add booking room line
+        cursor.callproc("sp_add_booking_room", [
+            int(booking_id),
+            int(room_type_id),
+            int(rooms_qty),
+            int(guests)
+        ])
+
+        # ✅ IMPORTANT: clear stored results again
+        for r in cursor.stored_results():
+            r.fetchall()
+
+        # 3) confirm booking so it won't stay PENDING
+        cursor.execute(
+            "UPDATE bookings SET booking_status='CONFIRMED' WHERE booking_id=%s",
+            (booking_id,)
+        )
+
+        # optional simulated payment
+        cursor.execute(
+            "UPDATE payments SET payment_status='PAID', paid_at=NOW() WHERE booking_id=%s",
+            (booking_id,)
+        )
+
+        db.commit()
+        cursor.close()
+
+        return render_template("booking_confirm.html",
+                               booking_id=booking_id,
+                               booking_code=booking_code)
+
+    except Exception as e:
+        import traceback
+        print("BOOKING ERROR:", e)
+        traceback.print_exc()
+        return f"Booking failed: {e}", 500
+
+@app.route('/cancel-booking/<int:booking_id>', methods=['POST'])
+def cancel_booking(booking_id):
+    if not session.get('loggedin'):
+        return redirect(url_for('login'))
+
+    try:
+        reason = request.form.get('reason', '').strip()
+
+        cursor = db.cursor()
+
+        # IMPORTANT: call your stored procedure
+        cursor.callproc("sp_cancel_booking", [
+            booking_id,
+            reason
+        ])
+
+        db.commit()
+        cursor.close()
+
+        return redirect(url_for('user_dashboard'))
+
+    except Exception as e:
+        import traceback
+        print("CANCEL ERROR:", e)
+        traceback.print_exc()
+        return f"Cancellation failed: {e}", 500
+
+    
 if __name__== '__main__':
     app.run(host="127.0.0.1", port=5000, debug=True)

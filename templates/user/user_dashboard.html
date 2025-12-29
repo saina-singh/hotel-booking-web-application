@@ -30,7 +30,7 @@
       </div>
     </div>
 
-    <!-- Quick actions -->
+    <!-- Quick actions + Bookings -->
     <div class="col-md-8">
       <div class="card shadow-sm mb-4">
         <div class="card-body">
@@ -45,19 +45,88 @@
         </div>
       </div>
 
-      <!-- Bookings placeholder (until you implement bookings table pages) -->
+      <!-- Your Bookings -->
       <div class="card shadow-sm">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h5 class="fw-bold mb-0">Your Bookings</h5>
-            <span class="badge bg-secondary">Coming soon</span>
+            {% if bookings and bookings|length > 0 %}
+            <span class="badge bg-dark">{{ bookings|length }}</span>
+            {% endif %}
           </div>
 
-          <p class="text-muted mb-0">
-            You’ll see your confirmed/cancelled bookings here once the booking flow is connected.
-          </p>
+          {% if bookings and bookings|length > 0 %}
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Code</th>
+                  <th>Hotel</th>
+                  <th>Dates</th>
+                  <th>Status</th>
+                  <th class="text-end">Total</th>
+                  <th style="width: 180px;">Action</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {% for b in bookings %}
+                <tr>
+                  <td class="fw-semibold">{{ b.booking_code }}</td>
+
+                  <td>
+                    {{ b.hotel_name }}<br>
+                    <span class="text-muted small">{{ b.city }}</span>
+                  </td>
+
+                  <td>{{ b.check_in }} → {{ b.check_out }}</td>
+
+                  <td>
+                    <span class="badge
+                      {% if b.booking_status == 'CONFIRMED' %} bg-success
+                      {% elif b.booking_status == 'CANCELLED' %} bg-danger
+                      {% else %} bg-warning text-dark
+                      {% endif %}">
+                      {{ b.booking_status }}
+                    </span>
+                  </td>
+
+                  <td class="text-end">
+                    {% if b.currency_code == 'GBP' %}£
+                    {% elif b.currency_code == 'USD' %}$
+                    {% elif b.currency_code == 'EUR' %}€
+                    {% else %}NRS
+                    {% endif %}
+                    {{ b.total_in_currency }}
+                    <div class="small text-muted">£{{ b.total_gbp }} base</div>
+                  </td>
+
+                  <td>
+                    {% if b.booking_status != 'CANCELLED' %}
+                    <form method="POST" action="{{ url_for('cancel_booking', booking_id=b.booking_id) }}">
+                      <input type="text" name="reason" class="form-control form-control-sm mb-2"
+                        placeholder="Reason (optional)">
+                      <button class="btn btn-outline-danger btn-sm w-100"
+                        onclick="return confirm('Cancel this booking? Cancellation fees may apply.')">
+                        Cancel
+                      </button>
+                    </form>
+                    {% else %}
+                    <span class="text-muted small">Already cancelled</span>
+                    {% endif %}
+                  </td>
+
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <p class="text-muted mb-0">No bookings yet. Book a room to see it here.</p>
+          {% endif %}
         </div>
       </div>
+
     </div>
   </div>
 

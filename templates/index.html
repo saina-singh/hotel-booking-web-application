@@ -25,11 +25,11 @@
           </div>
           <div class="col-md-3">
             <label>Check-In</label>
-            <input type="date" name="checkin" class="form-control">
+            <input type="date" id="checkin" name="checkin" class="form-control" required>
           </div>
           <div class="col-md-3">
             <label>Check-Out</label>
-            <input type="date" name="checkout" class="form-control">
+            <input type="date" id="checkout" name="checkout" class="form-control" required>
           </div>
           <div class="col-md-2">
             <label>People</label>
@@ -111,5 +111,52 @@
   <p class="text-muted">Please login or signup to start booking and explore destinations.</p>
 </div>
 {% endif %}
+
+<script>
+  const checkin = document.getElementById("checkin");
+  const checkout = document.getElementById("checkout");
+
+  function toISO(d) { return d.toISOString().split("T")[0]; }
+
+  const today = new Date();
+  const todayISO = toISO(today);
+
+  // check-in: from today up to today + 3 months
+  const maxCheckin = new Date(today);
+  maxCheckin.setMonth(maxCheckin.getMonth() + 3);
+  const maxCheckinISO = toISO(maxCheckin);
+
+  checkin.min = todayISO;
+  checkin.max = maxCheckinISO;
+
+  checkin.addEventListener("change", () => {
+    if (!checkin.value) return;
+
+    const ci = new Date(checkin.value);
+
+    // checkout must be at least next day
+    const minCO = new Date(ci);
+    minCO.setDate(minCO.getDate() + 1);
+
+    // max stay 30 nights
+    const maxCO = new Date(ci);
+    maxCO.setDate(maxCO.getDate() + 30);
+
+    checkout.min = toISO(minCO);
+    checkout.max = toISO(maxCO);
+
+    // if checkout is invalid, clear it
+    if (checkout.value && (checkout.value < checkout.min || checkout.value > checkout.max)) {
+      checkout.value = "";
+    }
+  });
+
+  checkout.addEventListener("change", () => {
+    if (checkin.value && checkout.value && checkout.value <= checkin.value) {
+      alert("Check-out must be after check-in.");
+      checkout.value = "";
+    }
+  });
+</script>
 
 {% endblock %}

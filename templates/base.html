@@ -11,34 +11,44 @@
 
 <body>
 
-  <div class="container-fluid px-5">
+  <!-- NAVBAR WRAPPER -->
+  <header class="border-bottom bg-white">
+    <div class="container py-3">
+      <div class="d-flex align-items-center">
 
-    <!-- NAVBAR -->
-    <div class="d-flex align-items-center py-3 flex-nowrap">
-      <h4 class="fw-bold mb-0">World Hotels</h4>
-
-      <div class="d-flex gap-3 align-items-center ms-auto flex-nowrap">
-        <a href="{{ url_for('index') }}">Discover</a>
-        <a href="{{ url_for('hotels') }}">Hotels</a>
-        <a href="{{ url_for('gallery') }}">Gallery</a>
-        <a href="{{ url_for('deals') }}">Deals</a>
-        <a href="{{ url_for('about') }}">About</a>
-        <a href="{{ url_for('contact') }}">Contact</a>
-
-        {% if session.get('loggedin') %}
-        <!-- Profile circle (top right) -->
-        <a href="{{ url_for('profile') }}" class="profile-circle" title="Profile">
-          {{ (session.get('email','U'))[0].upper() }}
+        <!-- LEFT: Logo -->
+        <a href="{{ url_for('index') }}" class="fw-bold fs-4 text-dark text-decoration-none">
+          World Hotels
         </a>
-        <a class="btn btn-dark btn-sm" href="{{ url_for('logout') }}">Logout</a>
-        {% else %}
-        <a class="btn btn-outline-dark btn-sm" href="{{ url_for('register') }}">Register</a>
-        <a class="btn btn-dark btn-sm" href="{{ url_for('login') }}">Login</a>
-        {% endif %}
+
+        <!-- CENTER: Navigation -->
+        <nav class="mx-auto">
+          <div class="d-flex align-items-center nav-center">
+            <a href="{{ url_for('index') }}">Discover</a>
+            <a href="{{ url_for('hotels') }}">Hotels</a>
+            <a href="{{ url_for('gallery') }}">Gallery</a>
+            <a href="{{ url_for('deals') }}">Deals</a>
+            <a href="{{ url_for('about') }}">About</a>
+            <a href="{{ url_for('contact') }}">Contact</a>
+          </div>
+        </nav>
+
+        <!-- RIGHT: Profile / Auth -->
+        <div class="d-flex align-items-center gap-3">
+          {% if session.get('loggedin') %}
+          <a href="{{ url_for('profile') }}" class="profile-circle" title="Profile">
+            {{ (session.get('email','U'))[0].upper() }}
+          </a>
+          <a class="btn btn-dark btn-sm px-3" href="{{ url_for('logout') }}">Logout</a>
+          {% else %}
+          <a class="btn btn-outline-dark btn-sm px-3" href="{{ url_for('register') }}">Register</a>
+          <a class="btn btn-dark btn-sm px-3" href="{{ url_for('login') }}">Login</a>
+          {% endif %}
+        </div>
+
       </div>
     </div>
-
-  </div> <!-- ✅ closes container-fluid properly -->
+  </header>
 
   <!-- Banner image ONLY on these pages -->
   {% if endpoint in ['index', 'login', 'register'] %}

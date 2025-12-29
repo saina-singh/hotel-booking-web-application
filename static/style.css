@@ -170,3 +170,42 @@ a:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
 }
+
+.nav-center a {
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  padding: 6px 4px;
+  position: relative;
+}
+
+.nav-center a:hover {
+  text-decoration: none;
+  opacity: 0.8;
+}
+
+/* optional: little underline hover effect */
+.nav-center a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0%;
+  height: 2px;
+  background: #111;
+  transition: width 0.2s ease;
+}
+
+.nav-center a:hover::after {
+  width: 100%;
+}
+
+.nav-center {
+  gap: 55px;
+}
+
+.nav-center a {
+  font-weight: bold;
+  letter-spacing: 0.3px;
+  padding: 6px 4px;
+  position: relative;
+}

@@ -40,7 +40,23 @@ def inject_endpoint():
 #default route
 @app.route('/')
 def index():
-    return render_template("index.html")
+    cursor = db.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT
+            h.hotel_id,
+            h.hotel_name,
+            c.name AS city
+        FROM hotels h
+        JOIN cities c ON c.city_id = h.city_id
+        WHERE h.is_active = 1
+        ORDER BY c.name
+    """)
+
+    hotels = cursor.fetchall()
+    cursor.close()
+
+    return render_template("index.html", hotels=hotels)
 
 @app.route('/about')
 def about():

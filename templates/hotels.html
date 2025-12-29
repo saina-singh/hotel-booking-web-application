@@ -6,24 +6,73 @@
 
 {% block body %}
 
-<h3 class="fw-bold mt-5">Cities to travel</h3>
+<div class="container my-4">
 
-<div class="row g-4 mt-2">
-  {% for h in hotels %}
-  <div class="col-md-3">
-    <div class="card shadow-sm h-100">
-      <img src="{{ url_for('static', filename=h.img) }}" class="card-img-top" alt="{{ h.city }}">
-      <div class="card-body">
-        <h6>{{ h.city }}</h6>
-        <p class="text-muted mb-0">{{ h.hotel_name }}</p>
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+    <div>
+      <h3 class="fw-bold mb-0">Cities to travel</h3>
+      <div class="text-muted">Search and browse our hotels</div>
+    </div>
 
-        <a class="btn btn-dark btn-sm mt-2" href="#">
-          View Hotel
-        </a>
-      </div>
+    <!-- Search -->
+    <div class="d-flex gap-2">
+      <input id="citySearch" class="form-control" style="max-width: 240px;" placeholder="Search city...">
+      <!-- type="button" prevents form submit/reload -->
+      <button type="button" class="btn btn-dark" id="searchBtn">Search</button>
+      <button type="button" class="btn btn-outline-dark" id="clearBtn">Clear</button>
     </div>
   </div>
-  {% endfor %}
+
+  <div class="row g-4 mt-2" id="hotelsGrid">
+    {% for h in hotels %}
+    <div class="col-md-3 hotel-item" data-city="{{ h.city|lower }}">
+      <div class="card shadow-sm h-100">
+        <img src="{{ url_for('static', filename=h.img) }}" class="card-img-top" alt="{{ h.city }}">
+        <div class="card-body">
+          <h6 class="fw-bold mb-1">{{ h.city }}</h6>
+          <p class="text-muted mb-2">{{ h.hotel_name }}</p>
+
+          <a class="btn btn-dark btn-sm" href="#">
+            View Hotel
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <p class="text-muted mt-3 d-none" id="noResults">No results found.</p>
 </div>
+
+<script>
+  function filterHotels() {
+    const inputEl = document.getElementById("citySearch");
+    const query = (inputEl.value || "").trim().toLowerCase();
+
+    const items = document.querySelectorAll(".hotel-item");
+    let shown = 0;
+
+    items.forEach(item => {
+      const city = (item.dataset.city || "").toLowerCase();
+      const match = city.includes(query);
+      item.style.display = match ? "" : "none";
+      if (match) shown++;
+    });
+
+    document.getElementById("noResults").classList.toggle("d-none", shown !== 0);
+  }
+
+  // Make sure DOM is ready
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("searchBtn").addEventListener("click", filterHotels);
+    document.getElementById("clearBtn").addEventListener("click", () => {
+      document.getElementById("citySearch").value = "";
+      filterHotels();
+    });
+
+    // live filtering
+    document.getElementById("citySearch").addEventListener("keyup", filterHotels);
+  });
+</script>
 
 {% endblock %}

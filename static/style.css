@@ -146,3 +146,27 @@ a:hover {
     min-height: auto;
   }
 }
+
+/* Hotels page cards (clean UI) */
+.hotel-img-wrap {
+  height: 180px;
+  overflow: hidden;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.hotel-img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+.hotel-card {
+  border-radius: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hotel-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
+}

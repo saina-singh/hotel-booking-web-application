@@ -123,3 +123,30 @@ a:hover {
     min-height: auto;
   }
 }
+
+/* =========================
+   POPULAR DESTINATIONS CARDS
+========================= */
+
+/* Fix card image height */
+.card-img-top {
+  height: 180px;
+  object-fit: cover;
+}
+
+/* Ensure all cards have equal height */
+.card {
+  height: 100%;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}

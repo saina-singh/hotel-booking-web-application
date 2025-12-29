@@ -4,12 +4,16 @@ from itsdangerous import URLSafeTimedSerializer
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__, template_folder='templates', static_folder='static', static_url_path='/')
+#secret key
+app.secret_key='secret123'
+#token generator
+serializer=URLSafeTimedSerializer(app.secret_key)
 import mysql.connector
 db=mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="sainasingh",
-    database="ai2025b",
+    host='localhost',
+    user='root',
+    password='sainasingh',
+    database='worldhotels',
     port=3306
 )
 
@@ -36,9 +40,7 @@ def inject_endpoint():
 #default route
 @app.route('/')
 def index():
-    #declare  a name of student to pass to the frontend file
-    nameOfStudent = ['Nirajan', 'Aditi', 'saina', 'Ram', 'Sita']
-    return render_template("index.html", time=30, calories=180, names=nameOfStudent)
+    return render_template("index.html")
 
 @app.route('/about')
 def about():
@@ -59,15 +61,44 @@ def deals():
 
 @app.route('/hotels')
 def hotels():
-    try:
-        cursor = db.cursor(dictionary=True)
-        cursor.execute("SELECT city, price FROM hotels")
-        cities = cursor.fetchall()
-    except Exception as e:
-        print("Hotels error:", e)
-        cities = []   # empty list if table/data missing
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT c.name AS city, h.hotel_name
+        FROM hotels h
+        JOIN cities c ON c.city_id = h.city_id
+        WHERE h.is_active = 1
+        ORDER BY c.name
+    """)
+    hotels_list = cursor.fetchall()
+    cursor.close()
 
-    return render_template('hotels.html', cities=cities)
+    # City -> image filename (put these files in static/images/hotels/)
+    city_images = {
+        "Aberdeen": "aberdeen.jpg",
+        "Belfast": "belfast.jpg",
+        "Birmingham": "birmingham.jpg",
+        "Bristol": "bristol.jpg",
+        "Cardiff": "cardiff.jpg",
+        "Edinburgh": "edinburgh.jpg",
+        "Glasgow": "glasgow.jpg",
+        "London": "london.jpg",
+        "Manchester": "manchester.jpg",
+        "New Castle": "newcastle.jpg",   # IMPORTANT: no space in filename
+        "Norwich": "norwich.jpg",
+        "Nottingham": "nottingham.jpg",
+        "Oxford": "oxford.jpg",
+        "Plymouth": "plymouth.jpg",
+        "Swansea": "swansea.jpg",
+        "Bournemouth": "bournemouth.jpg",
+        "Kent": "kent.jpg",
+    }
+
+    # Attach image path for each hotel (fallback to default.jpg)
+    for h in hotels_list:
+        filename = city_images.get(h["city"], "default.jpg")
+        h["img"] = f"images/hotels/{filename}"
+
+    return render_template("hotels.html", hotels=hotels_list)
 
 
 
@@ -75,108 +106,122 @@ def hotels():
 def login():
     msg = ''
     if request.method == 'POST':
-        username = request.form['username']
+        email = request.form['email']   
         password = request.form['password']
 
         cursor = db.cursor(dictionary=True)
         cursor.execute(
-            "SELECT * FROM users WHERE username = %s AND status=%s",
-            (username, 1)
+            "SELECT * FROM users WHERE email=%s AND is_active=%s",
+            (email, 1)
         )
         user = cursor.fetchone()
 
-        if user and check_password_hash(user['password'], password):
-            # SESSION
+        if user and check_password_hash(user['password_hash'], password):
             session['loggedin'] = True
-            session['id'] = user['id']
-            session['username'] = user['username']
-            session['role'] = user['role']
+            session['user_id'] = user['user_id']
+            session['email'] = user['email']
+            session['role'] = user['role']   # 'ADMIN' or 'CUSTOMER'
 
-            # ROLE BASED REDIRECT
-            if user['role'] == 'admin':
-                redirect_url = url_for('admin_dashboard')
+            if user['role'] == 'ADMIN':
+             redirect_url = url_for('admin_dashboard')
             else:
-                redirect_url = url_for('user_dashboard')
+             redirect_url = url_for('user_dashboard')
 
-            # COOKIE
+
             response = make_response(redirect(redirect_url))
-            response.set_cookie('username', user['username'], max_age=60*60*24)
-
+            response.set_cookie('email', user['email'], max_age=60*60*24)
             return response
         else:
-            msg = 'Invalid username or password'
+            msg = "Invalid email or password"
 
     return render_template("login.html", msg=msg)
 
+
 @app.route('/admin/dashboard')
 def admin_dashboard():
-    if 'loggedin' in session and session['role'] == 'admin':
+    if session.get('loggedin') and session.get('role') == 'ADMIN':
         cursor = db.cursor(dictionary=True)
-        cursor.execute("SELECT id, username, email, role, status FROM users")
+        cursor.execute("""
+            SELECT user_id, first_name, last_name, email, role, is_active
+            FROM users
+        """)
         users = cursor.fetchall()
-        total_users = len(users)   # COUNT USERS
-        return render_template('admin/admin_dashboard.html', users=users,  total_users=total_users)
-    
+        total_users = len(users)
+        return render_template('admin/admin_dashboard.html',
+                               users=users,
+                               total_users=total_users)
 
     return redirect(url_for('login'))
 
 
 @app.route('/user/dashboard')
 def user_dashboard():
-    if 'loggedin' in session and session['role'] == 'user':
-        return render_template('user/user_dashboard.html')
+    if session.get('loggedin') and session.get('role') == 'CUSTOMER':
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT user_id, first_name, last_name, email
+            FROM users
+            WHERE user_id = %s
+        """, (session['user_id'],))
+        me = cursor.fetchone()
+        return render_template('user/user_dashboard.html', me=me)
+
     return redirect(url_for('login'))
+
 
 @app.route('/logout')
 def logout():
     session.clear()
     response = make_response(redirect(url_for('login')))
-    response.delete_cookie('username')
+    response.delete_cookie('email')
     return response
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     msg = ''
     if request.method == 'POST':
+        try:
+            first_name = request.form.get('first_name', '').strip()
+            last_name  = request.form.get('last_name', '').strip()
+            email      = request.form.get('email', '').strip()
+            password   = request.form.get('password', '')
 
-        username = request.form['username']
-        password = request.form['password']
-        email = request.form['email']
+            if not first_name or not last_name or not email or not password:
+                return render_template("register.html", msg="Please fill in all fields.")
 
-        cursor = db.cursor()
+            cursor = db.cursor(dictionary=True)
+            cursor.execute("SELECT user_id FROM users WHERE email=%s", (email,))
+            if cursor.fetchone():
+                cursor.close()
+                return render_template("register.html", msg="Account already exists with this email.")
+            hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
 
-        # Check existing user
-        cursor.execute("SELECT * FROM users WHERE email=%s OR username=%s", 
-        (email, username)
-        )
-        account = cursor.fetchone()
-
-        if account:
-            return 'Account already exists!'
-        else:
-            hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-
-            cursor.execute(
-                "INSERT INTO users (username, password, email) VALUES (%s, %s, %s)",
-                (username, hashed_password, email)
-            )
+            cursor.execute("""
+                INSERT INTO users (first_name, last_name, email, password_hash, role, is_active)
+                VALUES (%s, %s, %s, %s, 'CUSTOMER', 0)
+            """, (first_name, last_name, email, hashed_password))
             db.commit()
+            cursor.close()
 
-            # Generate activation token
             token = serializer.dumps(email, salt='email-confirm')
-            link = f"http://127.0.0.1:5000/activate/{token}"
+            link = url_for('activate', token=token, _external=True)
 
+            try:
+                email_msg = Message('Activate Your Account', recipients=[email])
+                email_msg.body = f'Click the link to activate your account:\n{link}'
+                mail.send(email_msg)
+                msg = "Registration successful! Check your email to activate."
+            except Exception as e:
+                print("MAIL ERROR:", e)
+                msg = f"Registered, but email failed. Activate manually: {link}"
 
-            email_msg = Message(
-                'Activate Your Account',
-                recipients=[email]
-            )
-            email_msg.body = f'Click the link to activate your account:\n{link}'
-            mail.send(email_msg)
+            return render_template("register.html", msg=msg)
 
-            return 'Registration successful! Check your email.'
+        except Exception as e:
+            print("REGISTER ERROR:", e)
+            return render_template("register.html", msg=f"Server error: {e}")
 
-    return render_template("register.html")
+    return render_template("register.html", msg=msg)
 
 @app.route('/activate/<token>')
 def activate(token):
@@ -184,25 +229,57 @@ def activate(token):
         email = serializer.loads(token, salt='email-confirm', max_age=3600)
     except:
         return "Activation link expired"
+
     cursor = db.cursor()
-    cursor.execute("UPDATE users SET status=1 WHERE email=%s", (email,))
+    cursor.execute("UPDATE users SET is_active=1 WHERE email=%s", (email,))
     db.commit()
-    cursor.close()
     return "Account activated successfully!"
 
-@app.route('/user')
 
+@app.route('/user')
 def user():
-    cursor=db.cursor(dictionary=True)
-    cursor.execute("SELECT username, email FROM users")
-    users=cursor.fetchall()
-    print(users)
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT first_name, last_name, email, role, is_active FROM users")
+    users = cursor.fetchall()
+    cursor.close()
     return render_template("user.html", users=users)
 
-#secret key
-app.secret_key='secret123'
-#token generator
-serializer=URLSafeTimedSerializer(app.secret_key)
+@app.route('/profile', methods=['GET', 'POST'])
+def profile():
+    if not session.get('loggedin'):
+        return redirect(url_for('login'))
+
+    user_id = session.get('user_id')
+    msg = ""
+
+    cursor = db.cursor(dictionary=True)
+
+    # Update profile (optional)
+    if request.method == 'POST':
+        first_name = request.form.get('first_name', '').strip()
+        last_name  = request.form.get('last_name', '').strip()
+        phone      = request.form.get('phone', '').strip()
+
+        if not first_name or not last_name:
+            msg = "First name and last name are required."
+        else:
+            cursor.execute("""
+                UPDATE users
+                SET first_name=%s, last_name=%s, phone=%s
+                WHERE user_id=%s
+            """, (first_name, last_name, phone, user_id))
+            db.commit()
+            msg = "Profile updated successfully."
+
+    # Fetch latest profile info
+    cursor.execute("""
+        SELECT user_id, first_name, last_name, email, phone, role, is_active, created_at
+        FROM users
+        WHERE user_id = %s
+    """, (user_id,))
+    me = cursor.fetchone()
+
+    return render_template("profile.html", me=me, msg=msg)
 
 if __name__== '__main__':
     app.run(host="127.0.0.1", port=5000, debug=True)

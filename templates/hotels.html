@@ -9,22 +9,21 @@
 <h3 class="fw-bold mt-5">Cities to travel</h3>
 
 <div class="row g-4 mt-2">
-  {% for c in cities %}
+  {% for h in hotels %}
   <div class="col-md-3">
-    <div class="card shadow-sm">
-      <img src="{{ url_for('static', filename='images/hotel_gallery.png') }}" class="card-img-top">
+    <div class="card shadow-sm h-100">
+      <img src="{{ url_for('static', filename=h.img) }}" class="card-img-top" alt="{{ h.city }}">
       <div class="card-body">
-        <h6>{{ c.city }}</h6>
-        <p class="fw-bold">${{ c.price }}</p>
-        <button class="btn btn-dark btn-sm">Read Now</button>
+        <h6>{{ h.city }}</h6>
+        <p class="text-muted mb-0">{{ h.hotel_name }}</p>
+
+        <a class="btn btn-dark btn-sm mt-2" href="#">
+          View Hotel
+        </a>
       </div>
     </div>
   </div>
   {% endfor %}
 </div>
-
-{% if not cities %}
-<p class="text-muted mt-3">No hotels available.</p>
-{% endif %}
 
 {% endblock %}

@@ -1,15 +1,66 @@
 {% extends 'base.html' %}
 {% block body %}
-<h1>User Dashboard</h1>
 
-<p>Welcome, {{session.username}} <a href="{{ url_for('logout') }}">Logout</a></p>
+<div class="container my-4">
 
-<!--
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h2 class="fw-bold mb-0">User Dashboard</h2>
+      <div class="text-muted">
+        Welcome, {{ me.first_name }} {{ me.last_name }}
+      </div>
+    </div>
+  </div>
 
- # {{ url_for('static', filename='style.css') }}   
--->
+  <div class="row g-4">
+    <!-- Profile card -->
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="fw-bold mb-3">Your Profile</h5>
 
-{% endblock %}
-{% block head %}
-<title>HOme Pagesss</title>
+          <div class="mb-2"><span class="text-muted">ID:</span> {{ me.user_id }}</div>
+          <div class="mb-2"><span class="text-muted">Name:</span> {{ me.first_name }} {{ me.last_name }}</div>
+          <div class="mb-2"><span class="text-muted">Email:</span> {{ me.email }}</div>
+
+          <a href="{{ url_for('hotels') }}" class="btn btn-dark w-100 mt-3">
+            Start Booking
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="col-md-8">
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="fw-bold mb-3">Quick Actions</h5>
+
+          <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-outline-dark" href="{{ url_for('hotels') }}">Browse Hotels</a>
+            <a class="btn btn-outline-dark" href="{{ url_for('deals') }}">View Deals</a>
+            <a class="btn btn-outline-dark" href="{{ url_for('gallery') }}">Gallery</a>
+            <a class="btn btn-outline-dark" href="{{ url_for('contact') }}">Support</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bookings placeholder (until you implement bookings table pages) -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="fw-bold mb-0">Your Bookings</h5>
+            <span class="badge bg-secondary">Coming soon</span>
+          </div>
+
+          <p class="text-muted mb-0">
+            You’ll see your confirmed/cancelled bookings here once the booking flow is connected.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
 {% endblock %}

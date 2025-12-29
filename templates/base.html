@@ -10,6 +10,7 @@
 </head>
 
 <body>
+
   <div class="container-fluid px-5">
 
     <!-- NAVBAR -->
@@ -25,6 +26,10 @@
         <a href="{{ url_for('contact') }}">Contact</a>
 
         {% if session.get('loggedin') %}
+        <!-- Profile circle (top right) -->
+        <a href="{{ url_for('profile') }}" class="profile-circle" title="Profile">
+          {{ (session.get('email','U'))[0].upper() }}
+        </a>
         <a class="btn btn-dark btn-sm" href="{{ url_for('logout') }}">Logout</a>
         {% else %}
         <a class="btn btn-outline-dark btn-sm" href="{{ url_for('register') }}">Register</a>
@@ -32,8 +37,10 @@
         {% endif %}
       </div>
     </div>
-  </div>
 
+  </div> <!-- ✅ closes container-fluid properly -->
+
+  <!-- Banner image ONLY on these pages -->
   {% if endpoint in ['index', 'login', 'register'] %}
   <div class="container my-4">
     <img src="{{ url_for('static', filename='images/hotel_banner.png') }}" class="w-100 rounded-4"
@@ -41,18 +48,14 @@
   </div>
   {% endif %}
 
-
-
+  <!-- CTA ONLY when NOT logged in -->
   {% if not session.get('loggedin') %}
   <div class="container my-5 text-center p-5 bg-dark text-white rounded">
     <h3 class="fw-bold">Ready to plan your next trip?</h3>
     <p class="mt-2">Sign up now and get exclusive deals and discounts.</p>
-    <a href="{{ url_for('register') }}" class="btn btn-light mt-3">
-      Register Now
-    </a>
+    <a href="{{ url_for('register') }}" class="btn btn-light mt-3">Register Now</a>
   </div>
   {% endif %}
-
 
   {% block body %}{% endblock %}
 
@@ -61,7 +64,6 @@
     © 2025 WorldHotels.com — All Rights Reserved
   </footer>
 
-  </div>
 </body>
 
 </html>

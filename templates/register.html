@@ -5,18 +5,21 @@
 {% endblock %}
 
 {% block body %}
+<div class="container mt-5" style="max-width: 450px;">
+  <h3 class="mb-3">Register</h3>
 
-<div class="row justify-content-center mt-5">
-  <div class="col-md-4">
-    <h3>Register</h3>
+  <form method="POST" action="{{ url_for('register') }}">
+    <input name="first_name" class="form-control mb-3" placeholder="First name" required>
+    <input name="last_name" class="form-control mb-3" placeholder="Last name" required>
 
-    <form method="POST">
-      <input name="username" class="form-control mb-3" placeholder="Username" required>
-      <input name="email" type="email" class="form-control mb-3" placeholder="Email" required>
-      <input name="password" type="password" class="form-control mb-3" placeholder="Password" required>
-      <button class="btn btn-dark w-100">Register</button>
-    </form>
-  </div>
+    <input name="email" type="email" class="form-control mb-3" placeholder="Email" required>
+    <input name="password" type="password" class="form-control mb-3" placeholder="Password" required>
+
+    <button class="btn btn-dark w-100">Register</button>
+  </form>
+
+  {% if msg %}
+  <p class="text-danger mt-3">{{ msg }}</p>
+  {% endif %}
 </div>
-
 {% endblock %}

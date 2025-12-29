@@ -32,9 +32,10 @@
           <h6 class="fw-bold mb-1">{{ h.city }}</h6>
           <p class="text-muted mb-2">{{ h.hotel_name }}</p>
 
-          <a class="btn btn-dark btn-sm" href="#">
+          <a class="btn btn-dark btn-sm mt-2" href="{{ url_for('hotel_details', hotel_id=h.hotel_id) }}">
             View Hotel
           </a>
+
         </div>
       </div>
     </div>

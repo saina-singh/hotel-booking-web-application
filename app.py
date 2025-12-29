@@ -63,7 +63,7 @@ def deals():
 def hotels():
     cursor = db.cursor(dictionary=True)
     cursor.execute("""
-        SELECT c.name AS city, h.hotel_name
+        SELECT h.hotel_id, c.name AS city, h.hotel_name
         FROM hotels h
         JOIN cities c ON c.city_id = h.city_id
         WHERE h.is_active = 1
@@ -72,7 +72,6 @@ def hotels():
     hotels_list = cursor.fetchall()
     cursor.close()
 
-    # City -> image filename (put these files in static/images/hotels/)
     city_images = {
         "Aberdeen": "aberdeen.jpg",
         "Belfast": "belfast.jpg",
@@ -83,7 +82,7 @@ def hotels():
         "Glasgow": "glasgow.jpg",
         "London": "london.jpg",
         "Manchester": "manchester.jpg",
-        "New Castle": "newcastle.jpg",   # IMPORTANT: no space in filename
+        "New Castle": "newcastle.jpg",
         "Norwich": "norwich.jpg",
         "Nottingham": "nottingham.jpg",
         "Oxford": "oxford.jpg",
@@ -93,14 +92,11 @@ def hotels():
         "Kent": "kent.jpg",
     }
 
-    # Attach image path for each hotel (fallback to default.jpg)
     for h in hotels_list:
         filename = city_images.get(h["city"], "default.jpg")
         h["img"] = f"images/hotels/{filename}"
 
     return render_template("hotels.html", hotels=hotels_list)
-
-
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -280,6 +276,166 @@ def profile():
     me = cursor.fetchone()
 
     return render_template("profile.html", me=me, msg=msg)
+
+from datetime import date
+
+@app.route('/hotels/<int:hotel_id>')
+def hotel_details(hotel_id):
+    cursor = db.cursor(dictionary=True)
+
+    # Hotel + city + rates + capacity
+    cursor.execute("""
+        SELECT h.hotel_id, h.hotel_name, h.address, c.name AS city,
+               hcr.total_rooms, hcr.standard_peak_gbp, hcr.standard_offpeak_gbp
+        FROM hotels h
+        JOIN cities c ON c.city_id = h.city_id
+        JOIN hotel_capacity_rates hcr ON hcr.hotel_id = h.hotel_id
+        WHERE h.hotel_id = %s AND h.is_active = 1
+    """, (hotel_id,))
+    hotel = cursor.fetchone()
+    if not hotel:
+        cursor.close()
+        return "Hotel not found", 404
+
+    # Rooms + inventory + multipliers
+    cursor.execute("""
+        SELECT rt.room_type_id, rt.code, rt.max_guests,
+               rt.base_multiplier, rt.second_guest_multiplier,
+               inv.rooms_count
+        FROM hotel_room_inventory inv
+        JOIN room_types rt ON rt.room_type_id = inv.room_type_id
+        WHERE inv.hotel_id = %s
+        ORDER BY rt.room_type_id
+    """, (hotel_id,))
+    rooms = cursor.fetchall()
+
+    # Features per room type
+    cursor.execute("""
+        SELECT rt.code AS room_code, GROUP_CONCAT(f.name ORDER BY f.name SEPARATOR ', ') AS features
+        FROM room_type_features rtf
+        JOIN room_types rt ON rt.room_type_id = rtf.room_type_id
+        JOIN features f ON f.feature_id = rtf.feature_id
+        WHERE rtf.hotel_id = %s
+        GROUP BY rt.code
+    """, (hotel_id,))
+    features_rows = cursor.fetchall()
+    cursor.close()
+
+    features_map = {r["room_code"]: r["features"] for r in features_rows}
+
+    # Attach features + images + simple nightly pricing preview
+    room_images = {
+        "STANDARD": "images/rooms/standard.jpg",
+        "DOUBLE": "images/rooms/double.jpg",
+        "FAMILY": "images/rooms/family.jpg",
+        "SINGLE": "images/rooms/single.jpg",
+        "DELUXE": "images/rooms/deluxe.jpg",
+        "SUITE": "images/rooms/suite.jpg",
+        "EXECUTIVE": "images/rooms/executive.jpg",
+    }
+
+    # show a default “today” price preview (offpeak/peak depends on month, keep simple)
+    # (you can improve later with real check-in date)
+    month = date.today().month
+    is_peak = (4 <= month <= 8) or (month in (11, 12))
+    standard_rate = float(hotel["standard_peak_gbp"] if is_peak else hotel["standard_offpeak_gbp"])
+
+    for r in rooms:
+        r["features"] = features_map.get(r["code"], "—")
+        r["img"] = room_images.get(r["code"], "images/rooms/default.jpg")
+        r["nightly_from_gbp"] = round(standard_rate * float(r["base_multiplier"]), 2)
+
+    # hotel image (city-based)
+    hotel["img"] = f"images/hotels/{hotel['city'].lower().replace(' ', '')}.jpg"
+
+    return render_template("hotel_details.html", hotel=hotel, rooms=rooms)
+
+@app.route('/hotels/<int:hotel_id>/rooms/<room_code>')
+def room_details(hotel_id, room_code):
+    cursor = db.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT h.hotel_id, h.hotel_name, c.name AS city
+        FROM hotels h
+        JOIN cities c ON c.city_id = h.city_id
+        WHERE h.hotel_id = %s
+    """, (hotel_id,))
+    hotel = cursor.fetchone()
+    if not hotel:
+        cursor.close()
+        return "Hotel not found", 404
+
+    cursor.execute("""
+        SELECT rt.room_type_id, rt.code, rt.max_guests,
+               rt.base_multiplier, rt.second_guest_multiplier,
+               inv.rooms_count
+        FROM room_types rt
+        JOIN hotel_room_inventory inv
+          ON inv.room_type_id = rt.room_type_id AND inv.hotel_id = %s
+        WHERE rt.code = %s
+        LIMIT 1
+    """, (hotel_id, room_code))
+    room = cursor.fetchone()
+    if not room:
+        cursor.close()
+        return "Room type not found", 404
+
+    cursor.execute("""
+        SELECT f.name
+        FROM room_type_features rtf
+        JOIN features f ON f.feature_id = rtf.feature_id
+        JOIN room_types rt ON rt.room_type_id = rtf.room_type_id
+        WHERE rtf.hotel_id = %s AND rt.code = %s
+        ORDER BY f.name
+    """, (hotel_id, room_code))
+    features = [row["name"] for row in cursor.fetchall()]
+    cursor.close()
+
+    room_images = {
+        "STANDARD": "images/rooms/standard.jpg",
+        "DOUBLE": "images/rooms/double.jpg",
+        "FAMILY": "images/rooms/family.jpg",
+        "SINGLE": "images/rooms/single.jpg",
+        "DELUXE": "images/rooms/deluxe.jpg",
+        "SUITE": "images/rooms/suite.jpg",
+        "EXECUTIVE": "images/rooms/executive.jpg",
+    }
+    room["img"] = room_images.get(room["code"], "images/rooms/default.jpg")
+    room["features_list"] = features
+
+    return render_template("room_details.html", hotel=hotel, room=room)
+
+@app.route('/book/<int:hotel_id>', methods=['POST'])
+def book(hotel_id):
+    if not session.get("loggedin") or session.get("role") != "CUSTOMER":
+        return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+
+    check_in = request.form.get("check_in")
+    check_out = request.form.get("check_out")
+    room_type_id = int(request.form.get("room_type_id"))
+    rooms_qty = int(request.form.get("rooms_qty"))
+    guests = int(request.form.get("guests"))
+    currency_code = request.form.get("currency_code", "GBP")
+
+    cursor = db.cursor()
+
+    # CALL sp_create_booking
+    args = [user_id, hotel_id, check_in, check_out, currency_code, 0, ""]
+    cursor.callproc("sp_create_booking", args)
+
+    # after callproc, args updated
+    booking_id = args[5]
+    booking_code = args[6]
+
+    # CALL sp_add_booking_room
+    cursor.callproc("sp_add_booking_room", [booking_id, room_type_id, rooms_qty, guests])
+
+    db.commit()
+
+    cursor.close()
+    return render_template("booking_confirm.html", booking_id=booking_id, booking_code=booking_code)
 
 if __name__== '__main__':
     app.run(host="127.0.0.1", port=5000, debug=True)

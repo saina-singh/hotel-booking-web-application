@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block head %}<title>{{ hotel.hotel_name }} - {{ room.code }}</title>{% endblock %}
+{% block body %}
+
+<div class="container my-4">
+  <a href="{{ url_for('hotel_details', hotel_id=hotel.hotel_id) }}" class="btn btn-outline-dark btn-sm mb-3">
+    ← Back to Hotel
+  </a>
+
+  <div class="row g-4 align-items-stretch">
+    <div class="col-md-6">
+      <img src="{{ url_for('static', filename=room.img) }}" class="w-100 rounded-4"
+        style="height:360px; object-fit:cover;">
+    </div>
+    <div class="col-md-6">
+      <h2 class="fw-bold mb-1">{{ room.code }}</h2>
+      <div class="text-muted mb-3">{{ hotel.hotel_name }} • {{ hotel.city }}</div>
+
+      <div class="mb-2"><span class="text-muted">Max guests:</span> {{ room.max_guests }}</div>
+      <div class="mb-2"><span class="text-muted">Available rooms:</span> {{ room.rooms_count }}</div>
+
+      <h6 class="fw-bold mt-4">Features</h6>
+      {% if room.features_list and room.features_list|length > 0 %}
+      <ul class="mb-0">
+        {% for f in room.features_list %}
+        <li>{{ f }}</li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="text-muted">No features listed yet.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

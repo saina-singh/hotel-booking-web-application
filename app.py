@@ -74,9 +74,12 @@ def gallery():
 def deals():
     return render_template("deals.html")
 
+from flask import request  # make sure this is imported at top
 
 @app.route('/hotels')
 def hotels():
+    searched_city = (request.args.get("city") or "").strip()
+
     cursor = db.cursor(dictionary=True)
     cursor.execute("""
         SELECT h.hotel_id, c.name AS city, h.hotel_name
@@ -112,7 +115,10 @@ def hotels():
         filename = city_images.get(h["city"], "default.jpg")
         h["img"] = f"images/hotels/{filename}"
 
-    return render_template("hotels.html", hotels=hotels_list)
+    return render_template("hotels.html", hotels=hotels_list, searched_city=searched_city)
+
+
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

@@ -16,8 +16,8 @@
 
     <!-- Search -->
     <div class="d-flex gap-2">
-      <input id="citySearch" class="form-control" style="max-width: 240px;" placeholder="Search city...">
-      <!-- type="button" prevents form submit/reload -->
+      <input id="citySearch" class="form-control" style="max-width: 240px;" placeholder="Search city..."
+        value="{{ searched_city or '' }}">
       <button type="button" class="btn btn-dark" id="searchBtn">Search</button>
       <button type="button" class="btn btn-outline-dark" id="clearBtn">Clear</button>
     </div>
@@ -25,7 +25,7 @@
 
   <div class="row g-4 mt-2" id="hotelsGrid">
     {% for h in hotels %}
-    <div class="col-md-3 hotel-item" data-city="{{ h.city|lower }}">
+    <div class="col-md-3 hotel-item" data-city="{{ h.city|lower|trim }}">
       <div class="card shadow-sm h-100">
         <img src="{{ url_for('static', filename=h.img) }}" class="card-img-top" alt="{{ h.city }}">
         <div class="card-body">
@@ -63,9 +63,9 @@
     document.getElementById("noResults").classList.toggle("d-none", shown !== 0);
   }
 
-  // Make sure DOM is ready
   document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("searchBtn").addEventListener("click", filterHotels);
+
     document.getElementById("clearBtn").addEventListener("click", () => {
       document.getElementById("citySearch").value = "";
       filterHotels();
@@ -73,6 +73,10 @@
 
     // live filtering
     document.getElementById("citySearch").addEventListener("keyup", filterHotels);
+
+    // ✅ THIS IS THE "NUMBER 3" PART:
+    // auto-filter when page loads (so ?city=London works)
+    filterHotels();
   });
 </script>
 

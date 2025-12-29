@@ -50,8 +50,9 @@
 
   <div class="row g-4">
 
+    <!-- London -->
     <div class="col-md-3">
-      <a href="{{ url_for('hotels', city='London') }}" class="text-decoration-none text-dark">
+      <a href="{{ url_for('hotels') }}?city=London" class="text-decoration-none text-dark">
         <div class="card shadow-sm h-100">
           <img src="{{ url_for('static', filename='images/hotels/london.jpg') }}" class="card-img-top">
           <div class="card-body">
@@ -62,8 +63,9 @@
       </a>
     </div>
 
+    <!-- Edinburgh -->
     <div class="col-md-3">
-      <a href="{{ url_for('hotels', city='Edinburgh') }}" class="text-decoration-none text-dark">
+      <a href="{{ url_for('hotels') }}?city=Edinburgh" class="text-decoration-none text-dark">
         <div class="card shadow-sm h-100">
           <img src="{{ url_for('static', filename='images/hotels/edinburgh.jpg') }}" class="card-img-top">
           <div class="card-body">
@@ -74,8 +76,9 @@
       </a>
     </div>
 
+    <!-- Manchester -->
     <div class="col-md-3">
-      <a href="{{ url_for('hotels', city='Manchester') }}" class="text-decoration-none text-dark">
+      <a href="{{ url_for('hotels') }}?city=Manchester" class="text-decoration-none text-dark">
         <div class="card shadow-sm h-100">
           <img src="{{ url_for('static', filename='images/hotels/manchester.jpg') }}" class="card-img-top">
           <div class="card-body">
@@ -86,8 +89,9 @@
       </a>
     </div>
 
+    <!-- Oxford -->
     <div class="col-md-3">
-      <a href="{{ url_for('hotels', city='Oxford') }}" class="text-decoration-none text-dark">
+      <a href="{{ url_for('hotels') }}?city=Oxford" class="text-decoration-none text-dark">
         <div class="card shadow-sm h-100">
           <img src="{{ url_for('static', filename='images/hotels/oxford.jpg') }}" class="card-img-top">
           <div class="card-body">
@@ -100,7 +104,6 @@
 
   </div>
 </div>
-
 
 {% else %}
 <div class="container mt-4 text-center">

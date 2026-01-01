@@ -8,20 +8,39 @@
 
 <div class="container my-5">
 
-  <!-- Header -->
-  <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
-    <div>
+  <!-- HERO (with image) -->
+  <div class="row g-4 align-items-center mb-4">
+    <div class="col-lg-7">
       <h2 class="fw-bold mb-1">Deals & Discounts</h2>
-      <div class="text-muted">Save more when you book early — and understand peak vs off-peak pricing.</div>
+      <div class="text-muted mb-3">
+        Save more when you book early — and understand peak vs off-peak pricing.
+      </div>
+
+      <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('hotels') }}" class="btn btn-dark">Browse Hotels</a>
+        <a href="{{ url_for('gallery') }}" class="btn btn-outline-dark">View Gallery</a>
+      </div>
+
+      <div class="mt-3 text-muted small">
+        Tip: Booking 80–90 days early gives the maximum discount.
+      </div>
     </div>
-    <a href="{{ url_for('hotels') }}" class="btn btn-dark">Browse Hotels</a>
+
+    <div class="col-lg-5">
+      <img src="{{ url_for('static', filename='images/deals.jpg') }}" class="w-100 rounded-4 shadow-sm"
+        style="height: 220px; object-fit: cover;" alt="Deals banner">
+    </div>
   </div>
 
   <!-- Key offers -->
   <div class="row g-4">
     <!-- Advance booking -->
     <div class="col-lg-8">
-      <div class="card shadow-sm h-100">
+      <div class="card shadow-sm h-100 overflow-hidden">
+        <!-- image header -->
+        <img src="{{ url_for('static', filename='images/early.jpg') }}" class="w-100"
+          style="height: 160px; object-fit: cover;" alt="Book early">
+
         <div class="card-body p-4">
           <div class="d-flex justify-content-between align-items-start">
             <div>
@@ -76,7 +95,11 @@
 
     <!-- Peak vs off-peak -->
     <div class="col-lg-4">
-      <div class="card shadow-sm h-100">
+      <div class="card shadow-sm h-100 overflow-hidden">
+        <!-- image header -->
+        <img src="{{ url_for('static', filename='images/season.jpg') }}" class="w-100"
+          style="height: 160px; object-fit: cover;" alt="Seasons">
+
         <div class="card-body p-4">
           <h5 class="fw-bold mb-2">Peak vs Off-Peak</h5>
           <p class="text-muted mb-3">
@@ -132,10 +155,12 @@
     </div>
   </div>
 
-  <!-- CTA tiles -->
+  <!-- CTA tiles (with images) -->
   <div class="row g-4 mt-4">
     <div class="col-md-6">
-      <div class="card shadow-sm h-100">
+      <div class="card shadow-sm h-100 overflow-hidden">
+        <img src="{{ url_for('static', filename='images/city.jpg') }}" class="w-100"
+          style="height: 160px; object-fit: cover;" alt="City deals">
         <div class="card-body p-4">
           <h5 class="fw-bold mb-2">Popular City Deals</h5>
           <p class="text-muted mb-3">Jump straight into a city and see available hotels.</p>
@@ -150,7 +175,9 @@
     </div>
 
     <div class="col-md-6">
-      <div class="card shadow-sm h-100">
+      <div class="card shadow-sm h-100 overflow-hidden">
+        <img src="{{ url_for('static', filename='images/strategy.jpg') }}" class="w-150"
+          style="height: 180px; object-fit: cover;" alt="Booking strategy">
         <div class="card-body p-4">
           <h5 class="fw-bold mb-2">Best Strategy</h5>
           <ul class="text-muted mb-3 ps-3">

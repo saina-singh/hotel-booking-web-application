@@ -524,7 +524,7 @@ def book(hotel_id):
         ]
         result = cursor.callproc("sp_create_booking", args)
 
-        # ✅ IMPORTANT: clear stored results
+        # IMPORTANT: clear stored results
         for r in cursor.stored_results():
             r.fetchall()
 
@@ -539,7 +539,7 @@ def book(hotel_id):
             int(guests)
         ])
 
-        # ✅ IMPORTANT: clear stored results again
+        # IMPORTANT: clear stored results again
         for r in cursor.stored_results():
             r.fetchall()
 
@@ -574,17 +574,32 @@ def cancel_booking(booking_id):
         return redirect(url_for('login'))
 
     try:
-        reason = request.form.get('reason', '').strip()
+        reason = (request.form.get('reason') or "").strip()
+        delete_after = request.form.get('delete_after') == "1"
 
-        cursor = db.cursor()
+        cursor = db.cursor(dictionary=True)
 
-        # IMPORTANT: call your stored procedure
-        cursor.callproc("sp_cancel_booking", [
-            booking_id,
-            reason
-        ])
+        # make sure this booking belongs to the logged-in user
+        cursor.execute("SELECT user_id FROM bookings WHERE booking_id=%s", (booking_id,))
+        row = cursor.fetchone()
+        if not row or row["user_id"] != session["user_id"]:
+            cursor.close()
+            return "Not allowed", 403
+
+        # 1) cancel using stored procedure
+        cursor2 = db.cursor()
+        cursor2.callproc("sp_cancel_booking", [booking_id, reason])
+
+        # clear any stored results
+        for r in cursor2.stored_results():
+            r.fetchall()
+
+        # 2) optionally delete after cancel
+        if delete_after:
+            cursor.execute("DELETE FROM bookings WHERE booking_id=%s AND user_id=%s", (booking_id, session["user_id"]))
 
         db.commit()
+        cursor2.close()
         cursor.close()
 
         return redirect(url_for('user_dashboard'))
@@ -594,6 +609,43 @@ def cancel_booking(booking_id):
         print("CANCEL ERROR:", e)
         traceback.print_exc()
         return f"Cancellation failed: {e}", 500
+
+@app.route('/delete-booking/<int:booking_id>', methods=['POST'])
+def delete_booking(booking_id):
+    if not session.get('loggedin'):
+        return redirect(url_for('login'))
+
+    try:
+        cursor = db.cursor(dictionary=True)
+
+        # only allow deleting your own booking
+        cursor.execute("""
+            SELECT user_id, booking_status
+            FROM bookings
+            WHERE booking_id=%s
+        """, (booking_id,))
+        b = cursor.fetchone()
+
+        if not b or b["user_id"] != session["user_id"]:
+            cursor.close()
+            return "Not allowed", 403
+
+        # (recommended) only delete if already cancelled
+        if b["booking_status"] != "CANCELLED":
+            cursor.close()
+            return "You can only delete cancelled bookings.", 400
+
+        cursor.execute("DELETE FROM bookings WHERE booking_id=%s AND user_id=%s", (booking_id, session["user_id"]))
+        db.commit()
+        cursor.close()
+
+        return redirect(url_for('user_dashboard'))
+
+    except Exception as e:
+        import traceback
+        print("DELETE ERROR:", e)
+        traceback.print_exc()
+        return f"Delete failed: {e}", 500
 
     
 if __name__== '__main__':

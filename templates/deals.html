@@ -194,9 +194,16 @@
 </div>
 
 <script>
+  // Parse YYYY-MM-DD safely (no timezone issues)
+  function parseYMD(s) {
+    const [y, m, d] = (s || "").split("-").map(Number);
+    return new Date(y, (m || 1) - 1, d || 1);
+  }
+
   function daysBetween(a, b) {
-    const ms = b.getTime() - a.getTime();
-    return Math.floor(ms / (1000 * 60 * 60 * 24));
+    const a0 = new Date(a.getFullYear(), a.getMonth(), a.getDate());
+    const b0 = new Date(b.getFullYear(), b.getMonth(), b.getDate());
+    return Math.round((b0 - a0) / (1000 * 60 * 60 * 24));
   }
 
   function discountPct(daysAdv) {
@@ -220,32 +227,43 @@
       if (!booking.value || !checkin.value) {
         out.classList.remove("d-none");
         out.classList.add("alert-warning");
-        out.classList.remove("alert-success", "alert-light");
+        out.classList.remove("alert-success", "alert-light", "alert-danger");
         out.textContent = "Please choose both booking date and check-in date.";
         return;
       }
 
-      const b = new Date(booking.value);
-      const c = new Date(checkin.value);
-
+      const b = parseYMD(booking.value);
+      const c = parseYMD(checkin.value);
       const adv = daysBetween(b, c);
 
+      // invalid date order
       if (adv < 0) {
         out.classList.remove("d-none");
         out.classList.add("alert-warning");
-        out.classList.remove("alert-success", "alert-light");
+        out.classList.remove("alert-success", "alert-light", "alert-danger");
         out.textContent = "Check-in date must be after booking date.";
+        return;
+      }
+
+      // ✅ HARD CAP: cannot book more than 90 days early
+      if (adv > 90) {
+        out.classList.remove("d-none");
+        out.classList.add("alert-danger");
+        out.classList.remove("alert-success", "alert-light", "alert-warning");
+        out.textContent = `Booking too early — maximum allowed is 90 days in advance. You selected ${adv} day(s).`;
         return;
       }
 
       const pct = discountPct(adv);
 
       out.classList.remove("d-none");
-      out.classList.remove("alert-warning", "alert-light");
+      out.classList.remove("alert-warning", "alert-light", "alert-danger");
       out.classList.add("alert-success");
       out.textContent = `You are booking ${adv} day(s) in advance → Discount: ${pct}%`;
     });
   });
 </script>
+
+
 
 {% endblock %}

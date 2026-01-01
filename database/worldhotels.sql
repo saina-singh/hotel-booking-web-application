@@ -853,7 +853,15 @@ SELECT booking_id, booking_status
 FROM bookings
 ORDER BY booking_id DESC;
 
+SELECT h.hotel_id, c.name AS city, COUNT(*) AS room_types_count
+FROM hotels h
+JOIN cities c ON c.city_id = h.city_id
+LEFT JOIN hotel_room_inventory inv ON inv.hotel_id = h.hotel_id
+GROUP BY h.hotel_id, c.name
+ORDER BY room_types_count ASC, c.name;
 
+ALTER TABLE users
+ADD COLUMN profile_image VARCHAR(255) NULL;
 
 
 

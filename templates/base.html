@@ -36,8 +36,14 @@
         <!-- RIGHT: Profile / Auth -->
         <div class="d-flex align-items-center gap-3">
           {% if session.get('loggedin') %}
-          <a href="{{ url_for('profile') }}" class="profile-circle" title="Profile">
+          <a href="{{ url_for('profile') }}" class="profile-circle p-0 overflow-hidden" title="Profile"
+            style="width:42px;height:42px;display:flex;align-items:center;justify-content:center;">
+            {% if session.get('profile_image') %}
+            <img src="{{ url_for('static', filename='uploads/profiles/' ~ session.get('profile_image')) }}"
+              alt="Profile" style="width:100%;height:100%;object-fit:cover;">
+            {% else %}
             {{ (session.get('email','U'))[0].upper() }}
+            {% endif %}
           </a>
           <a class="btn btn-dark btn-sm px-3" href="{{ url_for('logout') }}">Logout</a>
           {% else %}

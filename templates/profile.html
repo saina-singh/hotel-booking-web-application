@@ -29,7 +29,29 @@
 
   <div class="card shadow-sm">
     <div class="card-body">
-      <form method="POST">
+
+      <!-- ✅ IMPORTANT: enctype added -->
+      <form method="POST" enctype="multipart/form-data">
+
+        <!-- Profile image row -->
+        <div class="d-flex align-items-center gap-3 mb-4">
+          <div>
+            {% if me.profile_image %}
+            <img id="profilePreview" src="{{ url_for('static', filename='uploads/profiles/' ~ me.profile_image) }}"
+              class="rounded-circle border" style="width:90px; height:90px; object-fit:cover;" alt="Profile picture">
+            {% else %}
+            <img id="profilePreview" src="{{ url_for('static', filename='images/default_profile.png') }}"
+              class="rounded-circle border" style="width:90px; height:90px; object-fit:cover;" alt="Profile picture">
+            {% endif %}
+          </div>
+
+          <div class="flex-grow-1">
+            <label class="form-label fw-semibold mb-1">Profile picture</label>
+            <input type="file" name="profile_image" id="profileImageInput" class="form-control"
+              accept=".png,.jpg,.jpeg,.webp">
+            <div class="text-muted small mt-1">PNG/JPG/WEBP • Max 2MB</div>
+          </div>
+        </div>
 
         <div class="row g-3">
           <div class="col-md-6">
@@ -68,4 +90,20 @@
   </div>
 
 </div>
+
+<script>
+  // ✅ live preview
+  document.addEventListener("DOMContentLoaded", () => {
+    const input = document.getElementById("profileImageInput");
+    const preview = document.getElementById("profilePreview");
+
+    input.addEventListener("change", () => {
+      const file = input.files && input.files[0];
+      if (!file) return;
+
+      const url = URL.createObjectURL(file);
+      preview.src = url;
+    });
+  });
+</script>
 {% endblock %}

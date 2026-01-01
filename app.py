@@ -7,7 +7,20 @@ from dateutil.relativedelta import relativedelta
 from flask import flash
 from datetime import date
 
+import os
+from werkzeug.utils import secure_filename
+
 app = Flask(__name__, template_folder='templates', static_folder='static', static_url_path='/')
+UPLOAD_FOLDER = os.path.join(app.root_path, "static", "uploads", "profiles")
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024  # 2MB limit
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
 #secret key
 app.secret_key='secret123'
 #token generator
@@ -121,9 +134,6 @@ def hotels():
 
     return render_template("hotels.html", hotels=hotels_list, searched_city=searched_city)
 
-
-
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     msg = ''
@@ -143,6 +153,7 @@ def login():
             session['user_id'] = user['user_id']
             session['email'] = user['email']
             session['role'] = user['role']   # 'ADMIN' or 'CUSTOMER'
+            session['profile_image'] = user.get('profile_image')
 
             if user['role'] == 'ADMIN':
              redirect_url = url_for('admin_dashboard')
@@ -157,7 +168,6 @@ def login():
             msg = "Invalid email or password"
 
     return render_template("login.html", msg=msg)
-
 
 @app.route('/admin/dashboard')
 def admin_dashboard():
@@ -321,7 +331,6 @@ def profile():
 
     cursor = db.cursor(dictionary=True)
 
-    # Update profile (optional)
     if request.method == 'POST':
         first_name = request.form.get('first_name', '').strip()
         last_name  = request.form.get('last_name', '').strip()
@@ -330,23 +339,49 @@ def profile():
         if not first_name or not last_name:
             msg = "First name and last name are required."
         else:
-            cursor.execute("""
-                UPDATE users
-                SET first_name=%s, last_name=%s, phone=%s
-                WHERE user_id=%s
-            """, (first_name, last_name, phone, user_id))
+            # --- handle optional profile image upload ---
+            file = request.files.get("profile_image")
+            new_filename = None
+
+            if file and file.filename:
+                if not allowed_file(file.filename):
+                    msg = "Invalid file type. Use PNG, JPG, JPEG, or WEBP."
+                else:
+                    ext = file.filename.rsplit(".", 1)[1].lower()
+                    new_filename = f"user_{user_id}.{ext}"
+                    save_path = os.path.join(app.config["UPLOAD_FOLDER"], new_filename)
+                    file.save(save_path)
+
+            # --- update profile fields ---
+            if new_filename:
+                cursor.execute("""
+                    UPDATE users
+                    SET first_name=%s, last_name=%s, phone=%s, profile_image=%s
+                    WHERE user_id=%s
+                """, (first_name, last_name, phone, new_filename, user_id))
+            else:
+                cursor.execute("""
+                    UPDATE users
+                    SET first_name=%s, last_name=%s, phone=%s
+                    WHERE user_id=%s
+                """, (first_name, last_name, phone, user_id))
+
             db.commit()
-            msg = "Profile updated successfully."
+            session['profile_image'] = new_filename
+            if msg == "":
+                msg = "Profile updated successfully."
 
     # Fetch latest profile info
     cursor.execute("""
-        SELECT user_id, first_name, last_name, email, phone, role, is_active, created_at
+        SELECT user_id, first_name, last_name, email, phone, role, is_active, created_at, profile_image
         FROM users
         WHERE user_id = %s
     """, (user_id,))
     me = cursor.fetchone()
+    cursor.close()
 
     return render_template("profile.html", me=me, msg=msg)
+
 
 from datetime import date
 

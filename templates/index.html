@@ -13,7 +13,7 @@
   <div class="banner-section">
     <div class="banner-content">
       <h5 class="booking-eyebrow">Start booking now</h5>
-      <a href="{{ url_for('hotels') }}" class="btn btn-dark mt-2">Start your search</a>
+      <a href="{{ url_for('hotels') }}" autocomplete="off" class="btn btn-dark mt-2">Start your search</a>
     </div>
 
     <div id="search" class="search-box search-on-banner shadow bg-white rounded">
@@ -31,9 +31,12 @@
             <label>Check-Out</label>
             <input type="date" id="checkout" name="checkout" class="form-control" required>
           </div>
+
           <div class="col-md-2">
             <label>People</label>
-            <input type="number" name="people" class="form-control">
+            <input type="number" name="people" class="form-control" min="0" value="0"
+              oninput="if(this.value < 0) this.value = 0;">
+
           </div>
           <div class="col-md-1">
             <button class="btn btn-dark w-100">Go</button>
@@ -57,7 +60,7 @@
           <img src="{{ url_for('static', filename='images/hotels/london.jpg') }}" class="card-img-top">
           <div class="card-body">
             <h6>London</h6>
-            <p class="text-muted mb-0">Starting from £200/night</p>
+            <p class="text-muted mb-0">Click to view for more details.</p>
           </div>
         </div>
       </a>
@@ -70,7 +73,7 @@
           <img src="{{ url_for('static', filename='images/hotels/edinburgh.jpg') }}" class="card-img-top">
           <div class="card-body">
             <h6>Edinburgh</h6>
-            <p class="text-muted mb-0">Starting from £180/night</p>
+            <p class="text-muted mb-0">Click to view for more details.</p>
           </div>
         </div>
       </a>
@@ -83,7 +86,7 @@
           <img src="{{ url_for('static', filename='images/hotels/manchester.jpg') }}" class="card-img-top">
           <div class="card-body">
             <h6>Manchester</h6>
-            <p class="text-muted mb-0">Starting from £190/night</p>
+            <p class="text-muted mb-0">Click to view for more details.</p>
           </div>
         </div>
       </a>
@@ -96,7 +99,7 @@
           <img src="{{ url_for('static', filename='images/hotels/oxford.jpg') }}" class="card-img-top">
           <div class="card-body">
             <h6>Oxford</h6>
-            <p class="text-muted mb-0">Starting from £170/night</p>
+            <p class="text-muted mb-0">Click to view for more details.</p>
           </div>
         </div>
       </a>
@@ -117,6 +120,18 @@
   const checkout = document.getElementById("checkout");
 
   function toISO(d) { return d.toISOString().split("T")[0]; }
+
+  // ✅ HARD RESET: Chrome sometimes restores values after first paint
+  window.addEventListener("pageshow", () => {
+    checkin.value = "";
+    checkout.value = "";
+  });
+
+  // Also reset on full load (extra safety)
+  window.addEventListener("load", () => {
+    checkin.value = "";
+    checkout.value = "";
+  });
 
   const today = new Date();
   const todayISO = toISO(today);
@@ -158,5 +173,6 @@
     }
   });
 </script>
+
 
 {% endblock %}

@@ -845,7 +845,13 @@ WHERE rt.code = 'SINGLE'
 GROUP BY h.hotel_id, rt.code
 ORDER BY h.hotel_id;
 
+UPDATE bookings
+SET booking_status = 'CONFIRMED'
+WHERE booking_id = 2;
 
+SELECT booking_id, booking_status
+FROM bookings
+ORDER BY booking_id DESC;
 
 
 

@@ -496,6 +496,7 @@ def book(hotel_id):
         check_in  = datetime.strptime(check_in_str, "%Y-%m-%d").date()
         check_out = datetime.strptime(check_out_str, "%Y-%m-%d").date()
 
+        # --- validations ---
         today = date.today()
         if check_in < today:
             return "Check-in cannot be in the past.", 400
@@ -506,13 +507,13 @@ def book(hotel_id):
         if nights > 30:
             return "Stay cannot be more than 30 nights.", 400
 
-        max_checkin = today + relativedelta(months=3)
-        if check_in > max_checkin:
-            return "Bookings can only be made up to 3 months in advance.", 400
+        days_advance = (check_in - today).days
+        if days_advance > 90:
+            return "Bookings can only be made up to 90 days in advance.", 400
 
         cursor = db.cursor()
 
-        # 1) create booking
+        # 1) create booking (stored proc)
         args = [
             int(session['user_id']),
             int(hotel_id),
@@ -524,14 +525,14 @@ def book(hotel_id):
         ]
         result = cursor.callproc("sp_create_booking", args)
 
-        # IMPORTANT: clear stored results
+        # clear stored results (important for mysql-connector)
         for r in cursor.stored_results():
             r.fetchall()
 
         booking_id = result[5]
         booking_code = result[6]
 
-        # 2) add booking room line
+        # 2) add booking room line (stored proc)
         cursor.callproc("sp_add_booking_room", [
             int(booking_id),
             int(room_type_id),
@@ -539,17 +540,14 @@ def book(hotel_id):
             int(guests)
         ])
 
-        # IMPORTANT: clear stored results again
         for r in cursor.stored_results():
             r.fetchall()
 
-        # 3) confirm booking so it won't stay PENDING
+        # 3) confirm booking + simulate payment
         cursor.execute(
             "UPDATE bookings SET booking_status='CONFIRMED' WHERE booking_id=%s",
             (booking_id,)
         )
-
-        # optional simulated payment
         cursor.execute(
             "UPDATE payments SET payment_status='PAID', paid_at=NOW() WHERE booking_id=%s",
             (booking_id,)
@@ -558,9 +556,48 @@ def book(hotel_id):
         db.commit()
         cursor.close()
 
-        return render_template("booking_confirm.html",
-                               booking_id=booking_id,
-                               booking_code=booking_code)
+        # 4) fetch booking summary + currency conversion for confirmation page
+        cursor2 = db.cursor(dictionary=True)
+        cursor2.execute("""
+            SELECT
+              b.booking_id,
+              b.booking_code,
+              b.booking_status,
+              b.created_at,
+              b.check_in,
+              b.check_out,
+              b.currency_code,
+
+              b.standard_rate_gbp,
+              b.subtotal_gbp,
+              b.advance_discount_pct,
+              b.advance_discount_gbp,
+              b.total_gbp,
+
+              xr.gbp_to_curr,
+              ROUND(b.total_gbp * xr.gbp_to_curr, 2) AS total_in_currency
+
+            FROM bookings b
+            LEFT JOIN exchange_rates xr
+              ON xr.currency_code = b.currency_code
+             AND xr.rate_date = (
+                SELECT MAX(rate_date)
+                FROM exchange_rates
+                WHERE currency_code = b.currency_code
+                  AND rate_date <= CURRENT_DATE()
+             )
+            WHERE b.booking_id = %s
+            LIMIT 1
+        """, (booking_id,))
+        summary = cursor2.fetchone()
+        cursor2.close()
+
+        # fallback if exchange rate missing
+        if not summary.get("gbp_to_curr"):
+            summary["gbp_to_curr"] = 1.0
+            summary["total_in_currency"] = summary["total_gbp"]
+
+        return render_template("booking_confirm.html", summary=summary)
 
     except Exception as e:
         import traceback

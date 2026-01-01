@@ -138,7 +138,7 @@
 
   // check-in: from today up to today + 3 months
   const maxCheckin = new Date(today);
-  maxCheckin.setMonth(maxCheckin.getMonth() + 3);
+  maxCheckin.setDate(maxCheckin.getDate() + 90);
   const maxCheckinISO = toISO(maxCheckin);
 
   checkin.min = todayISO;

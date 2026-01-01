@@ -1,17 +1,119 @@
 {% extends 'base.html' %}
 {% block head %}<title>Booking Confirmed</title>{% endblock %}
 {% block body %}
-<div class="container my-5" style="max-width: 700px;">
-  <div class="card shadow-sm">
-    <div class="card-body">
-      <h2 class="fw-bold mb-2">Booking Created</h2>
-      <p class="text-muted mb-0">Your booking is saved.</p>
-      <hr>
-      <div><span class="text-muted">Booking ID:</span> <b>{{ booking_id }}</b></div>
-      <div><span class="text-muted">Booking Code:</span> <b>{{ booking_code }}</b></div>
 
-      <a href="{{ url_for('hotels') }}" class="btn btn-dark mt-4">Back to Hotels</a>
+<div class="container my-5" style="max-width: 800px;">
+  <div class="card shadow-sm">
+    <div class="card-body p-4">
+
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+          <h2 class="fw-bold mb-1">Booking Confirmed </h2>
+          <p class="text-muted mb-0">Your booking has been saved in the database.</p>
+        </div>
+
+        <span class="badge
+          {% if summary.booking_status == 'CONFIRMED' %} bg-success
+          {% elif summary.booking_status == 'CANCELLED' %} bg-danger
+          {% else %} bg-warning text-dark
+          {% endif %}
+        fs-6">
+          {{ summary.booking_status }}
+        </span>
+      </div>
+
+      <hr class="my-4">
+
+      <!-- Booking info -->
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="p-3 bg-light rounded">
+            <div class="text-muted small">Booking ID</div>
+            <div class="fw-bold">{{ summary.booking_id }}</div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="p-3 bg-light rounded">
+            <div class="text-muted small">Booking Code</div>
+            <div class="fw-bold">{{ summary.booking_code }}</div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="p-3 bg-light rounded">
+            <div class="text-muted small">Check-in</div>
+            <div class="fw-bold">{{ summary.check_in }}</div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="p-3 bg-light rounded">
+            <div class="text-muted small">Check-out</div>
+            <div class="fw-bold">{{ summary.check_out }}</div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-4">
+
+      <!-- Price summary -->
+      <h5 class="fw-bold mb-3">Price Summary</h5>
+
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <tbody>
+            <tr>
+              <td class="text-muted">Standard rate used (GBP)</td>
+              <td class="text-end fw-semibold">£{{ summary.standard_rate_gbp }}</td>
+            </tr>
+
+            <tr>
+              <td class="text-muted">Subtotal (GBP)</td>
+              <td class="text-end fw-semibold">£{{ summary.subtotal_gbp }}</td>
+            </tr>
+
+            <tr>
+              <td class="text-muted">
+                Advance discount ({{ summary.advance_discount_pct }}%)
+              </td>
+              <td class="text-end fw-semibold text-success">
+                - £{{ summary.advance_discount_gbp }}
+              </td>
+            </tr>
+
+            <tr class="table-light">
+              <td class="fw-bold">Total (GBP)</td>
+              <td class="text-end fw-bold">£{{ summary.total_gbp }}</td>
+            </tr>
+
+            <tr>
+              <td class="text-muted">
+                Total in {{ summary.currency_code }}
+                <div class="small text-muted">
+                  Rate used: 1 GBP = {{ summary.gbp_to_curr }} {{ summary.currency_code }}
+                </div>
+              </td>
+              <td class="text-end fw-bold">
+                {% if summary.currency_code == 'GBP' %}£
+                {% elif summary.currency_code == 'USD' %}$
+                {% elif summary.currency_code == 'EUR' %}€
+                {% else %}NRS
+                {% endif %}
+                {{ summary.total_in_currency }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex gap-2 mt-4">
+        <a href="{{ url_for('hotels') }}" class="btn btn-dark">Back to Hotels</a>
+        <a href="{{ url_for('user_dashboard') }}" class="btn btn-outline-dark">Go to Dashboard</a>
+      </div>
+
     </div>
   </div>
 </div>
+
 {% endblock %}

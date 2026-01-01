@@ -6,27 +6,219 @@
 
 {% block body %}
 
-<!-- FEATURED DEALS -->
 <div class="container my-5">
-  <h3 class="fw-bold mb-4">Featured Deals</h3>
 
+  <!-- Header -->
+  <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Deals & Discounts</h2>
+      <div class="text-muted">Save more when you book early — and understand peak vs off-peak pricing.</div>
+    </div>
+    <a href="{{ url_for('hotels') }}" class="btn btn-dark">Browse Hotels</a>
+  </div>
+
+  <!-- Key offers -->
   <div class="row g-4">
-    <div class="col-md-6">
-      <div class="p-4 bg-light rounded shadow-sm">
-        <h5>Summer Special</h5>
-        <p>Book early and get up to 30% discount on select hotels.</p>
-        <a href="{{ url_for('deals') }}" class="btn btn-dark btn-sm">View Deals</a>
+    <!-- Advance booking -->
+    <div class="col-lg-8">
+      <div class="card shadow-sm h-100">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h4 class="fw-bold mb-1">Book Early, Save More</h4>
+              <p class="text-muted mb-3">
+                Discount rules are applied automatically based on how many days in advance you book.
+              </p>
+            </div>
+            <span class="badge bg-success fs-6">Up to 30% OFF</span>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Advance Booking Window</th>
+                  <th>Discount</th>
+                  <th>Example</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="fw-semibold">80 – 90 days before check-in</td>
+                  <td><span class="badge bg-success">30% OFF</span></td>
+                  <td class="text-muted">Best value</td>
+                </tr>
+                <tr>
+                  <td class="fw-semibold">60 – 79 days before check-in</td>
+                  <td><span class="badge bg-success">20% OFF</span></td>
+                  <td class="text-muted">Great value</td>
+                </tr>
+                <tr>
+                  <td class="fw-semibold">45 – 59 days before check-in</td>
+                  <td><span class="badge bg-success">10% OFF</span></td>
+                  <td class="text-muted">Good value</td>
+                </tr>
+                <tr>
+                  <td class="fw-semibold">Less than 45 days</td>
+                  <td><span class="badge bg-secondary">0% OFF</span></td>
+                  <td class="text-muted">Standard pricing</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mt-3 text-muted small">
+            Discounts apply to the booking subtotal and are shown at checkout.
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="col-md-6">
-      <div class="p-4 bg-light rounded shadow-sm">
-        <h5>Family Packages</h5>
-        <p>Special family room offers with added benefits.</p>
-        <a href="{{ url_for('deals') }}" class="btn btn-dark btn-sm">View Deals</a>
+    <!-- Peak vs off-peak -->
+    <div class="col-lg-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-2">Peak vs Off-Peak</h5>
+          <p class="text-muted mb-3">
+            Room rates change depending on the season. Peak season is typically higher due to demand.
+          </p>
+
+          <div class="p-3 bg-light rounded mb-3">
+            <div class="fw-semibold">Peak Season</div>
+            <div class="text-muted small">April – August, November – December</div>
+          </div>
+
+          <div class="p-3 bg-light rounded">
+            <div class="fw-semibold">Off-Peak Season</div>
+            <div class="text-muted small">All other months</div>
+          </div>
+
+          <a href="{{ url_for('hotels') }}" class="btn btn-outline-dark w-100 mt-3">Check Prices</a>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- Deal calculator -->
+  <div class="card shadow-sm mt-4">
+    <div class="card-body p-4">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+        <div>
+          <h5 class="fw-bold mb-1">Quick Discount Preview</h5>
+          <div class="text-muted">Pick dates to preview which discount bracket you fall into.</div>
+        </div>
+        <span class="badge bg-dark">Preview Tool</span>
+      </div>
+
+      <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Booking date</label>
+          <input type="date" id="bookingDate" class="form-control">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Check-in date</label>
+          <input type="date" id="checkinDate" class="form-control">
+        </div>
+
+        <div class="col-md-4">
+          <button type="button" class="btn btn-dark w-100" id="calcBtn">Calculate Discount</button>
+        </div>
+      </div>
+
+      <div class="mt-3">
+        <div id="calcResult" class="alert alert-light mb-0 d-none"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA tiles -->
+  <div class="row g-4 mt-4">
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-2">Popular City Deals</h5>
+          <p class="text-muted mb-3">Jump straight into a city and see available hotels.</p>
+          <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-outline-dark btn-sm" href="{{ url_for('hotels') }}?city=London">London</a>
+            <a class="btn btn-outline-dark btn-sm" href="{{ url_for('hotels') }}?city=Edinburgh">Edinburgh</a>
+            <a class="btn btn-outline-dark btn-sm" href="{{ url_for('hotels') }}?city=Manchester">Manchester</a>
+            <a class="btn btn-outline-dark btn-sm" href="{{ url_for('hotels') }}?city=Oxford">Oxford</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-2">Best Strategy</h5>
+          <ul class="text-muted mb-3 ps-3">
+            <li>Book 80–90 days ahead for the maximum 30% discount.</li>
+            <li>Choose off-peak months for cheaper base rates.</li>
+            <li>Confirm early to avoid limited availability.</li>
+          </ul>
+          <a href="{{ url_for('hotels') }}" class="btn btn-dark btn-sm">Start Booking</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
+
+<script>
+  function daysBetween(a, b) {
+    const ms = b.getTime() - a.getTime();
+    return Math.floor(ms / (1000 * 60 * 60 * 24));
+  }
+
+  function discountPct(daysAdv) {
+    if (daysAdv >= 80 && daysAdv <= 90) return 30;
+    if (daysAdv >= 60 && daysAdv <= 79) return 20;
+    if (daysAdv >= 45 && daysAdv <= 59) return 10;
+    return 0;
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const booking = document.getElementById("bookingDate");
+    const checkin = document.getElementById("checkinDate");
+    const btn = document.getElementById("calcBtn");
+    const out = document.getElementById("calcResult");
+
+    // default booking date = today
+    const today = new Date();
+    booking.value = today.toISOString().split("T")[0];
+
+    btn.addEventListener("click", () => {
+      if (!booking.value || !checkin.value) {
+        out.classList.remove("d-none");
+        out.classList.add("alert-warning");
+        out.classList.remove("alert-success", "alert-light");
+        out.textContent = "Please choose both booking date and check-in date.";
+        return;
+      }
+
+      const b = new Date(booking.value);
+      const c = new Date(checkin.value);
+
+      const adv = daysBetween(b, c);
+
+      if (adv < 0) {
+        out.classList.remove("d-none");
+        out.classList.add("alert-warning");
+        out.classList.remove("alert-success", "alert-light");
+        out.textContent = "Check-in date must be after booking date.";
+        return;
+      }
+
+      const pct = discountPct(adv);
+
+      out.classList.remove("d-none");
+      out.classList.remove("alert-warning", "alert-light");
+      out.classList.add("alert-success");
+      out.textContent = `You are booking ${adv} day(s) in advance → Discount: ${pct}%`;
+    });
+  });
+</script>
 
 {% endblock %}

@@ -19,9 +19,14 @@
     <div id="search" class="search-box search-on-banner shadow bg-white rounded">
       <form method="GET" action="{{ url_for('hotels') }}">
         <div class="row g-4 align-items-end">
-          <div class="col-md-3">
+          <div class="col-md-3 position-relative">
             <label>Location</label>
-            <input name="city" class="form-control" placeholder="Enter destination">
+            <input name="city" id="cityInput" class="form-control" placeholder="Enter destination" autocomplete="off">
+
+            <!-- Suggestions box -->
+            <div id="citySuggestions" class="list-group position-absolute w-100 shadow d-none"
+              style="z-index: 1000; max-height: 220px; overflow-y: auto;">
+            </div>
           </div>
           <div class="col-md-3">
             <label>Check-In</label>
@@ -116,60 +121,54 @@
 {% endif %}
 
 <script>
-  const checkin = document.getElementById("checkin");
-  const checkout = document.getElementById("checkout");
+  const cities = [
+    "Aberdeen", "Belfast", "Birmingham", "Bristol", "Cardiff", "Edinburgh",
+    "Glasgow", "London", "Manchester", "New Castle", "Norwich", "Nottingham",
+    "Oxford", "Plymouth", "Swansea", "Bournemouth", "Kent"
+  ];
 
-  function toISO(d) { return d.toISOString().split("T")[0]; }
+  const cityInput = document.getElementById("cityInput");
+  const suggestionsBox = document.getElementById("citySuggestions");
 
-  // ✅ HARD RESET: Chrome sometimes restores values after first paint
-  window.addEventListener("pageshow", () => {
-    checkin.value = "";
-    checkout.value = "";
-  });
+  cityInput.addEventListener("input", () => {
+    const query = cityInput.value.trim().toLowerCase();
+    suggestionsBox.innerHTML = "";
 
-  // Also reset on full load (extra safety)
-  window.addEventListener("load", () => {
-    checkin.value = "";
-    checkout.value = "";
-  });
-
-  const today = new Date();
-  const todayISO = toISO(today);
-
-  // check-in: from today up to today + 3 months
-  const maxCheckin = new Date(today);
-  maxCheckin.setDate(maxCheckin.getDate() + 90);
-  const maxCheckinISO = toISO(maxCheckin);
-
-  checkin.min = todayISO;
-  checkin.max = maxCheckinISO;
-
-  checkin.addEventListener("change", () => {
-    if (!checkin.value) return;
-
-    const ci = new Date(checkin.value);
-
-    // checkout must be at least next day
-    const minCO = new Date(ci);
-    minCO.setDate(minCO.getDate() + 1);
-
-    // max stay 30 nights
-    const maxCO = new Date(ci);
-    maxCO.setDate(maxCO.getDate() + 30);
-
-    checkout.min = toISO(minCO);
-    checkout.max = toISO(maxCO);
-
-    // if checkout is invalid, clear it
-    if (checkout.value && (checkout.value < checkout.min || checkout.value > checkout.max)) {
-      checkout.value = "";
+    if (!query) {
+      suggestionsBox.classList.add("d-none");
+      return;
     }
+
+    const matches = cities.filter(c =>
+      c.toLowerCase().startsWith(query)
+    );
+
+    if (matches.length === 0) {
+      suggestionsBox.classList.add("d-none");
+      return;
+    }
+
+    matches.forEach(city => {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "list-group-item list-group-item-action";
+      item.textContent = city;
+
+      item.addEventListener("click", () => {
+        cityInput.value = city;
+        suggestionsBox.classList.add("d-none");
+      });
+
+      suggestionsBox.appendChild(item);
+    });
+
+    suggestionsBox.classList.remove("d-none");
   });
 
-  checkout.addEventListener("change", () => {
-    if (checkin.value && checkout.value && checkout.value <= checkin.value) {
-      alert("Check-out must be after check-in.");
-      checkout.value = "";
+  // Hide suggestions when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!cityInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+      suggestionsBox.classList.add("d-none");
     }
   });
 </script>

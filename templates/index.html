@@ -18,35 +18,40 @@
 
     <div id="search" class="search-box search-on-banner shadow bg-white rounded">
       <form method="GET" action="{{ url_for('hotels') }}">
-        <div class="row g-4 align-items-end">
-          <div class="col-md-3 position-relative">
+        <div class="row g-3 align-items-end">
+          <!-- Location -->
+          <div class="col-12 col-lg-3 position-relative">
             <label>Location</label>
-            <input name="city" id="cityInput" class="form-control" placeholder="Enter destination" autocomplete="off">
+            <input id="cityInput" name="city" class="form-control" placeholder="Enter destination" autocomplete="off">
 
-            <!-- Suggestions box -->
-            <div id="citySuggestions" class="list-group position-absolute w-100 shadow d-none"
-              style="z-index: 1000; max-height: 220px; overflow-y: auto;">
-            </div>
+            <div id="citySuggestions" class="city-suggestions d-none"></div>
           </div>
-          <div class="col-md-3">
+
+          <!-- Check-in -->
+          <div class="col-12 col-lg-3">
             <label>Check-In</label>
             <input type="date" id="checkin" name="checkin" class="form-control" required>
           </div>
-          <div class="col-md-3">
+
+          <!-- Check-out -->
+          <div class="col-12 col-lg-3">
             <label>Check-Out</label>
             <input type="date" id="checkout" name="checkout" class="form-control" required>
           </div>
 
-          <div class="col-md-2">
+          <!-- People -->
+          <div class="col-6 col-lg-2">
             <label>People</label>
             <input type="number" name="people" class="form-control" min="1" value="1"
               oninput="if(this.value < 1) this.value = 1;">
-
           </div>
-          <div class="col-md-1">
+
+          <!-- Go button -->
+          <div class="col-6 col-lg-1">
             <button class="btn btn-dark w-100">Go</button>
           </div>
         </div>
+
       </form>
     </div>
   </div>
@@ -130,42 +135,59 @@
   const cityInput = document.getElementById("cityInput");
   const suggestionsBox = document.getElementById("citySuggestions");
 
+  function showSuggestions(list, query) {
+    suggestionsBox.innerHTML = "";
+
+    if (list.length === 0) {
+      suggestionsBox.innerHTML = `
+        <div class="px-3 py-2 text-muted small">
+          No destinations found
+        </div>`;
+      suggestionsBox.classList.remove("d-none");
+      return;
+    }
+
+    list.forEach(city => {
+      const btn = document.createElement("div");
+      btn.className = "city-item";
+
+      const start = city.slice(0, query.length);
+      const rest = city.slice(query.length);
+
+      btn.innerHTML = `
+        <span class="city-icon">📍</span>
+        <div>
+          <div><span class="city-highlight">${start}</span>${rest}</div>
+          <div class="city-muted">World Hotels • ${city}</div>
+        </div>
+      `;
+
+      btn.addEventListener("click", () => {
+        cityInput.value = city;
+        suggestionsBox.classList.add("d-none");
+      });
+
+      suggestionsBox.appendChild(btn);
+    });
+
+    suggestionsBox.classList.remove("d-none");
+  }
+
   cityInput.addEventListener("input", () => {
     const query = cityInput.value.trim().toLowerCase();
-    suggestionsBox.innerHTML = "";
 
     if (!query) {
       suggestionsBox.classList.add("d-none");
       return;
     }
 
-    const matches = cities.filter(c =>
-      c.toLowerCase().startsWith(query)
-    );
+    const matches = cities
+      .filter(c => c.toLowerCase().startsWith(query))
+      .slice(0, 8);
 
-    if (matches.length === 0) {
-      suggestionsBox.classList.add("d-none");
-      return;
-    }
-
-    matches.forEach(city => {
-      const item = document.createElement("button");
-      item.type = "button";
-      item.className = "list-group-item list-group-item-action";
-      item.textContent = city;
-
-      item.addEventListener("click", () => {
-        cityInput.value = city;
-        suggestionsBox.classList.add("d-none");
-      });
-
-      suggestionsBox.appendChild(item);
-    });
-
-    suggestionsBox.classList.remove("d-none");
+    showSuggestions(matches, cityInput.value.trim());
   });
 
-  // Hide suggestions when clicking outside
   document.addEventListener("click", (e) => {
     if (!cityInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
       suggestionsBox.classList.add("d-none");

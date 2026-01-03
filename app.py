@@ -460,17 +460,23 @@ def hotel_details(hotel_id):
 def room_details(hotel_id, room_code):
     cursor = db.cursor(dictionary=True)
 
+    # Hotel + city + rates (safe with LEFT JOIN)
     cursor.execute("""
-        SELECT h.hotel_id, h.hotel_name, c.name AS city
+        SELECT h.hotel_id, h.hotel_name, h.address, c.name AS city,
+               COALESCE(hcr.standard_peak_gbp, 0) AS standard_peak_gbp,
+               COALESCE(hcr.standard_offpeak_gbp, 0) AS standard_offpeak_gbp
         FROM hotels h
         JOIN cities c ON c.city_id = h.city_id
+        LEFT JOIN hotel_capacity_rates hcr ON hcr.hotel_id = h.hotel_id
         WHERE h.hotel_id = %s
+        LIMIT 1
     """, (hotel_id,))
     hotel = cursor.fetchone()
     if not hotel:
         cursor.close()
         return "Hotel not found", 404
 
+    # Room info + inventory
     cursor.execute("""
         SELECT rt.room_type_id, rt.code, rt.max_guests,
                rt.base_multiplier, rt.second_guest_multiplier,
@@ -486,6 +492,7 @@ def room_details(hotel_id, room_code):
         cursor.close()
         return "Room type not found", 404
 
+    # Features
     cursor.execute("""
         SELECT f.name
         FROM room_type_features rtf
@@ -497,6 +504,7 @@ def room_details(hotel_id, room_code):
     features = [row["name"] for row in cursor.fetchall()]
     cursor.close()
 
+    # Images
     room_images = {
         "STANDARD": "images/rooms/standard.jpg",
         "DOUBLE": "images/rooms/double.jpg",
@@ -507,10 +515,67 @@ def room_details(hotel_id, room_code):
         "EXECUTIVE": "images/rooms/executive.jpg",
     }
     room["img"] = room_images.get(room["code"], "images/rooms/default.jpg")
+
+    # Pricing preview (simple: pick peak/offpeak based on current month)
+    from datetime import date
+    m = date.today().month
+    is_peak = (4 <= m <= 8) or (m in (11, 12))
+    standard_rate = float(hotel["standard_peak_gbp"] if is_peak else hotel["standard_offpeak_gbp"])
+    room["nightly_from_gbp"] = round(standard_rate * float(room["base_multiplier"]), 2)
+
+    # Professional “copy” per room type
+    room_copy = {
+        "SINGLE": {
+            "title": "Perfect for solo travellers",
+            "desc": "A compact, comfortable space ideal for short business trips or quick city stays.",
+            "why": ["Best value for solo trips", "Easy check-in, easy stay", "Comfort-focused layout"],
+        },
+        "STANDARD": {
+            "title": "A balanced, comfortable stay",
+            "desc": "Our most popular option with all the essentials for a relaxed city break.",
+            "why": ["Great value", "Comfortable for 1–2 guests", "Most requested room type"],
+        },
+        "DOUBLE": {
+            "title": "Ideal for couples",
+            "desc": "A cosy layout with extra space and comfort — great for two guests.",
+            "why": ["Better space than Standard", "Great for couples", "Relaxed city stay"],
+        },
+        "FAMILY": {
+            "title": "Made for families",
+            "desc": "More room, more comfort — suitable for parents and children with practical space.",
+            "why": ["More space", "Family friendly", "Comfort for longer stays"],
+        },
+        "DELUXE": {
+            "title": "Upgrade your comfort",
+            "desc": "Premium feel with added comfort — perfect when you want something special.",
+            "why": ["More premium feel", "Better comfort", "Great for special trips"],
+        },
+        "SUITE": {
+            "title": "Luxury suite experience",
+            "desc": "The best choice for extra space, premium comfort, and a memorable stay.",
+            "why": ["Most spacious", "Premium comfort", "Top-tier experience"],
+        },
+        "EXECUTIVE": {
+            "title": "Business-class convenience",
+            "desc": "Designed for business travellers needing comfort and efficiency.",
+            "why": ["Great for business trips", "Comfort + space", "Premium feel"],
+        },
+    }
+
+    info = room_copy.get(room["code"], {
+        "title": "Comfortable stay",
+        "desc": "A well-designed room with the essentials for a clean and relaxing stay.",
+        "why": ["Comfortable", "Good value", "Easy stay"],
+    })
+
+    room["title"] = info["title"]
+    room["desc"] = info["desc"]
+    room["why_list"] = info["why"]
     room["features_list"] = features
 
     return render_template("room_details.html", hotel=hotel, room=room)
 
+from flask import flash, redirect, url_for  # make sure flash is imported (you already have it)
 
 @app.route('/book/<int:hotel_id>', methods=['POST'])
 def book(hotel_id):
@@ -518,6 +583,7 @@ def book(hotel_id):
         return redirect(url_for('login'))
 
     try:
+        # ---------- form inputs ----------
         room_type_id  = int(request.form.get('room_type_id'))
         check_in_str  = request.form.get('check_in')
         check_out_str = request.form.get('check_out')
@@ -525,13 +591,18 @@ def book(hotel_id):
         guests        = int(request.form.get('guests', 1))
         currency_code = request.form.get('currency_code', 'GBP')
 
+        payment_method = (request.form.get('payment_method') or 'CARD').upper().strip()
+        allowed_methods = {'CARD', 'PAYPAL', 'BANK', 'CASH'}
+        if payment_method not in allowed_methods:
+            return "Invalid payment method", 400
+
         if not check_in_str or not check_out_str:
             return "Missing dates", 400
 
         check_in  = datetime.strptime(check_in_str, "%Y-%m-%d").date()
         check_out = datetime.strptime(check_out_str, "%Y-%m-%d").date()
 
-        # --- validations ---
+        # ---------- validations ----------
         today = date.today()
         if check_in < today:
             return "Check-in cannot be in the past.", 400
@@ -540,15 +611,14 @@ def book(hotel_id):
 
         nights = (check_out - check_in).days
         if nights > 30:
-            return "Stay cannot be more than 30 nights.", 400
+            return "Stay cannot exceed 30 nights.", 400
 
-        days_advance = (check_in - today).days
-        if days_advance > 90:
-            return "Bookings can only be made up to 90 days in advance.", 400
+        if (check_in - today).days > 90:
+            return "Bookings allowed only up to 90 days in advance.", 400
 
         cursor = db.cursor()
 
-        # 1) create booking (stored proc)
+        # ---------- create booking ----------
         args = [
             int(session['user_id']),
             int(hotel_id),
@@ -560,14 +630,12 @@ def book(hotel_id):
         ]
         result = cursor.callproc("sp_create_booking", args)
 
-        # clear stored results (important for mysql-connector)
         for r in cursor.stored_results():
             r.fetchall()
 
         booking_id = result[5]
-        booking_code = result[6]
 
-        # 2) add booking room line (stored proc)
+        # ---------- add room ----------
         cursor.callproc("sp_add_booking_room", [
             int(booking_id),
             int(room_type_id),
@@ -578,67 +646,44 @@ def book(hotel_id):
         for r in cursor.stored_results():
             r.fetchall()
 
-        # 3) confirm booking + simulate payment
+        # ---------- confirm booking ----------
         cursor.execute(
             "UPDATE bookings SET booking_status='CONFIRMED' WHERE booking_id=%s",
             (booking_id,)
         )
+
+        # ---------- mark payment paid ----------
         cursor.execute(
-            "UPDATE payments SET payment_status='PAID', paid_at=NOW() WHERE booking_id=%s",
-            (booking_id,)
+            """
+            UPDATE payments
+            SET payment_status='PAID',
+                paid_at=NOW(),
+                provider=%s
+            WHERE booking_id=%s
+            """,
+            (payment_method, booking_id)
         )
 
         db.commit()
         cursor.close()
 
-        # 4) fetch booking summary + currency conversion for confirmation page
-        cursor2 = db.cursor(dictionary=True)
-        cursor2.execute("""
-            SELECT
-              b.booking_id,
-              b.booking_code,
-              b.booking_status,
-              b.created_at,
-              b.check_in,
-              b.check_out,
-              b.currency_code,
+        # ✅ ONLY NEW PART: success notification
+        payment_labels = {
+            "CARD": "Card payment completed successfully.",
+            "PAYPAL": "PayPal payment completed successfully.",
+            "BANK": "Bank transfer completed successfully.",
+            "CASH": "Pay at hotel selected. Booking confirmed."
+        }
+        flash(payment_labels.get(payment_method, "Payment completed successfully."), "success")
 
-              b.standard_rate_gbp,
-              b.subtotal_gbp,
-              b.advance_discount_pct,
-              b.advance_discount_gbp,
-              b.total_gbp,
-
-              xr.gbp_to_curr,
-              ROUND(b.total_gbp * xr.gbp_to_curr, 2) AS total_in_currency
-
-            FROM bookings b
-            LEFT JOIN exchange_rates xr
-              ON xr.currency_code = b.currency_code
-             AND xr.rate_date = (
-                SELECT MAX(rate_date)
-                FROM exchange_rates
-                WHERE currency_code = b.currency_code
-                  AND rate_date <= CURRENT_DATE()
-             )
-            WHERE b.booking_id = %s
-            LIMIT 1
-        """, (booking_id,))
-        summary = cursor2.fetchone()
-        cursor2.close()
-
-        # fallback if exchange rate missing
-        if not summary.get("gbp_to_curr"):
-            summary["gbp_to_curr"] = 1.0
-            summary["total_in_currency"] = summary["total_gbp"]
-
-        return render_template("booking_confirm.html", summary=summary)
+        return redirect(url_for('user_dashboard'))
 
     except Exception as e:
         import traceback
         print("BOOKING ERROR:", e)
         traceback.print_exc()
         return f"Booking failed: {e}", 500
+
 
 @app.route('/cancel-booking/<int:booking_id>', methods=['POST'])
 def cancel_booking(booking_id):
@@ -718,6 +763,67 @@ def delete_booking(booking_id):
         print("DELETE ERROR:", e)
         traceback.print_exc()
         return f"Delete failed: {e}", 500
+
+@app.route('/payment/<int:booking_id>', methods=['GET', 'POST'])
+def payment(booking_id):
+    if not session.get('loggedin'):
+        return redirect(url_for('login'))
+
+    msg = ""
+    cursor = db.cursor(dictionary=True)
+
+    # make sure booking belongs to user
+    cursor.execute("""
+        SELECT b.booking_id, b.booking_code, b.user_id, b.hotel_id,
+               b.check_in, b.check_out, b.total_gbp, b.booking_status,
+               h.hotel_name, c.name AS city
+        FROM bookings b
+        JOIN hotels h ON h.hotel_id = b.hotel_id
+        JOIN cities c ON c.city_id = h.city_id
+        WHERE b.booking_id=%s
+        LIMIT 1
+    """, (booking_id,))
+    summary = cursor.fetchone()
+
+    if not summary or summary["user_id"] != session["user_id"]:
+        cursor.close()
+        return "Not allowed", 403
+
+    # if already paid/confirmed
+    if summary["booking_status"] == "CONFIRMED":
+        cursor.close()
+        return redirect(url_for("user_dashboard"))
+
+    if request.method == "POST":
+        payment_method = (request.form.get("payment_method") or "").upper().strip()
+        allowed = {"CARD", "PAYPAL", "BANK", "CASH"}
+
+        if payment_method not in allowed:
+            msg = "Please select a valid payment method."
+        else:
+            # mark payment as PAID + store method in provider
+            cursor.execute("""
+                UPDATE payments
+                SET payment_status='PAID',
+                    paid_at=NOW(),
+                    provider=%s
+                WHERE booking_id=%s
+            """, (payment_method, booking_id))
+
+            # confirm booking
+            cursor.execute("""
+                UPDATE bookings
+                SET booking_status='CONFIRMED'
+                WHERE booking_id=%s
+            """, (booking_id,))
+
+            db.commit()
+            cursor.close()
+
+            return redirect(url_for("user_dashboard"))
+
+    cursor.close()
+    return render_template("payment.html", summary=summary, msg=msg)
 
     
 if __name__== '__main__':

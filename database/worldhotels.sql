@@ -863,6 +863,14 @@ ORDER BY room_types_count ASC, c.name;
 ALTER TABLE users
 ADD COLUMN profile_image VARCHAR(255) NULL;
 
+ALTER TABLE payments
+ADD COLUMN payment_method ENUM('CARD','PAYPAL','BANK','CASH')
+NULL AFTER provider;
+DESCRIBE payments;
+SHOW COLUMNS FROM payments LIKE 'payment_method';
+
+
+
 
 
 

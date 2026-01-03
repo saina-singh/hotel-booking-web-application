@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block head %}<title>Payment • {{ summary.booking_code }}</title>{% endblock %}
+{% block body %}
+
+<div class="container my-5" style="max-width: 900px;">
+
+  <div class="d-flex justify-content-between align-items-end mb-3">
+    <div>
+      <h2 class="fw-bold mb-1">Payment</h2>
+      <div class="text-muted">Booking code: <span class="fw-semibold">{{ summary.booking_code }}</span></div>
+    </div>
+    <a href="{{ url_for('user_dashboard') }}" class="btn btn-outline-dark btn-sm">Back to Dashboard</a>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left: summary -->
+    <div class="col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-3">Booking Summary</h5>
+
+          <div class="mb-2"><span class="text-muted">Hotel:</span> {{ summary.hotel_name }} ({{ summary.city }})</div>
+          <div class="mb-2"><span class="text-muted">Dates:</span> {{ summary.check_in }} → {{ summary.check_out }}
+          </div>
+          <div class="mb-2"><span class="text-muted">Total (GBP):</span> <span class="fw-bold">£{{ summary.total_gbp
+              }}</span></div>
+
+          <hr>
+
+          <div class="text-muted small">
+            Demo payment only (for assessment). We don’t store card details.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: payment form -->
+    <div class="col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-3">Choose Payment Method</h5>
+
+          {% if msg %}
+          <div class="alert alert-warning">{{ msg }}</div>
+          {% endif %}
+
+          <form method="POST">
+            <label class="form-label fw-semibold">Payment method</label>
+            <select class="form-select" name="payment_method" required>
+              <option value="CARD">Card</option>
+              <option value="PAYPAL">PayPal</option>
+              <option value="BANK">Bank Transfer</option>
+              <option value="CASH">Pay at Hotel</option>
+            </select>
+
+
+            <div id="cardFields" class="d-none mt-3">
+              <div class="alert alert-light small mb-2">Demo only: don’t use real card info.</div>
+
+              <label class="form-label fw-semibold">Card number</label>
+              <input type="text" class="form-control" placeholder="1234 5678 9012 3456">
+
+              <div class="row g-2 mt-2">
+                <div class="col-6">
+                  <label class="form-label fw-semibold">Expiry</label>
+                  <input type="text" class="form-control" placeholder="MM/YY">
+                </div>
+                <div class="col-6">
+                  <label class="form-label fw-semibold">CVV</label>
+                  <input type="text" class="form-control" placeholder="123">
+                </div>
+              </div>
+            </div>
+
+            <button class="btn btn-dark w-100 mt-4">
+              Pay & Confirm Booking
+            </button>
+
+            <div class="text-muted small mt-2">
+              After payment, your booking status becomes <b>CONFIRMED</b>.
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const pm = document.getElementById("pm");
+  const card = document.getElementById("cardFields");
+  pm.addEventListener("change", () => {
+    card.classList.toggle("d-none", pm.value !== "CARD");
+  });
+</script>
+
+{% endblock %}

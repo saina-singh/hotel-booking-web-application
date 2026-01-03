@@ -1,36 +1,123 @@
 {% extends 'base.html' %}
-{% block head %}<title>{{ hotel.hotel_name }} - {{ room.code }}</title>{% endblock %}
+{% block head %}
+<title>{{ hotel.hotel_name }} • {{ room.code }}</title>
+{% endblock %}
+
 {% block body %}
-
 <div class="container my-4">
-  <a href="{{ url_for('hotel_details', hotel_id=hotel.hotel_id) }}" class="btn btn-outline-dark btn-sm mb-3">
-    ← Back to Hotel
-  </a>
 
-  <div class="row g-4 align-items-stretch">
-    <div class="col-md-6">
-      <img src="{{ url_for('static', filename=room.img) }}" class="w-100 rounded-4"
-        style="height:360px; object-fit:cover;">
+  <!-- Breadcrumb -->
+  <div class="mb-3">
+    <a href="{{ url_for('hotels') }}" class="text-decoration-none text-muted">Hotels</a>
+    <span class="text-muted"> / </span>
+    <a href="{{ url_for('hotel_details', hotel_id=hotel.hotel_id) }}" class="text-decoration-none text-muted">
+      {{ hotel.hotel_name }}
+    </a>
+    <span class="text-muted"> / </span>
+    <span class="fw-semibold">{{ room.code }}</span>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- LEFT: Room info -->
+    <div class="col-lg-8">
+      <div class="card shadow-sm overflow-hidden">
+        <img src="{{ url_for('static', filename=room.img) }}" class="w-100" style="height:360px; object-fit:cover;">
+
+        <div class="card-body p-4">
+          <h2 class="fw-bold mb-1">{{ room.code }}</h2>
+          <div class="text-muted mb-3">{{ room.title }}</div>
+
+          <div class="fw-bold fs-4 mb-2">
+            £{{ room.nightly_from_gbp }} / night
+          </div>
+
+          <div class="text-muted mb-3">
+            Max guests: {{ room.max_guests }} • Available rooms: {{ room.rooms_count }}
+          </div>
+
+          <p class="text-muted">{{ room.desc }}</p>
+
+          <hr>
+
+          <h6 class="fw-bold">Why choose this room</h6>
+          <ul class="text-muted">
+            {% for x in room.why_list %}
+            <li>{{ x }}</li>
+            {% endfor %}
+          </ul>
+
+          <h6 class="fw-bold mt-3">Included features</h6>
+          {% if room.features_list %}
+          <div class="d-flex flex-wrap gap-2">
+            {% for f in room.features_list %}
+            <span class="badge bg-dark">{{ f }}</span>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="text-muted">No features listed.</div>
+          {% endif %}
+        </div>
+      </div>
     </div>
-    <div class="col-md-6">
-      <h2 class="fw-bold mb-1">{{ room.code }}</h2>
-      <div class="text-muted mb-3">{{ hotel.hotel_name }} • {{ hotel.city }}</div>
 
-      <div class="mb-2"><span class="text-muted">Max guests:</span> {{ room.max_guests }}</div>
-      <div class="mb-2"><span class="text-muted">Available rooms:</span> {{ room.rooms_count }}</div>
+    <!-- RIGHT: Booking + payment -->
+    <div class="col-lg-4">
+      <div class="card shadow-sm position-sticky" style="top:20px;">
+        <div class="card-body p-4">
 
-      <h6 class="fw-bold mt-4">Features</h6>
-      {% if room.features_list and room.features_list|length > 0 %}
-      <ul class="mb-0">
-        {% for f in room.features_list %}
-        <li>{{ f }}</li>
-        {% endfor %}
-      </ul>
-      {% else %}
-      <div class="text-muted">No features listed yet.</div>
-      {% endif %}
+          <h5 class="fw-bold mb-2">Book this room</h5>
+          <div class="text-muted mb-3">{{ hotel.hotel_name }} • {{ hotel.city }}</div>
+
+          <form method="POST" action="{{ url_for('book', hotel_id=hotel.hotel_id) }}">
+            <input type="hidden" name="room_type_id" value="{{ room.room_type_id }}">
+
+            <label class="form-label fw-semibold">Check-in</label>
+            <input type="date" class="form-control" name="check_in" required>
+
+            <label class="form-label fw-semibold mt-2">Check-out</label>
+            <input type="date" class="form-control" name="check_out" required>
+
+            <div class="row g-2 mt-2">
+              <div class="col-6">
+                <label class="form-label fw-semibold">Rooms</label>
+                <input type="number" class="form-control" name="rooms_qty" value="1" min="1">
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-semibold">Guests</label>
+                <input type="number" class="form-control" name="guests" value="1" min="1">
+              </div>
+            </div>
+
+            <label class="form-label fw-semibold mt-2">Currency</label>
+            <select class="form-select" name="currency_code">
+              <option value="GBP">GBP</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="NP">NP</option>
+            </select>
+
+            <label class="form-label fw-semibold mt-3">Payment method</label>
+            <select class="form-select" name="payment_method" id="paymentMethod">
+              <option value="CARD">Card</option>
+              <option value="PAYPAL">PayPal</option>
+              <option value="BANK">Bank Transfer</option>
+              <option value="CASH">Pay at Hotel</option>
+            </select>
+
+            <button class="btn btn-dark w-100 mt-3">
+              Confirm Booking
+            </button>
+
+            <div class="text-muted small mt-2">
+              Demo payment • No real card details stored
+            </div>
+          </form>
+
+        </div>
+      </div>
     </div>
+
   </div>
 </div>
-
 {% endblock %}

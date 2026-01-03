@@ -32,9 +32,10 @@
           <h6 class="fw-bold mb-1">{{ h.city }}</h6>
           <p class="text-muted mb-2">{{ h.hotel_name }}</p>
 
-          <a class="btn btn-dark btn-sm mt-2" href="{{ url_for('hotel_details', hotel_id=h.hotel_id) }}">
+          <a href="{{ url_for('hotel_details', hotel_id=h.hotel_id) }}" class="btn btn-dark">
             View Hotel
           </a>
+
 
         </div>
       </div>
@@ -74,8 +75,6 @@
     // live filtering
     document.getElementById("citySearch").addEventListener("keyup", filterHotels);
 
-    // ✅ THIS IS THE "NUMBER 3" PART:
-    // auto-filter when page loads (so ?city=London works)
     filterHotels();
   });
 </script>

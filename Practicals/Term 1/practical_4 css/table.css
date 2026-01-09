@@ -1,0 +1,21 @@
+
+table {
+    width:"100%";
+    border : 1px solid red;
+    color: blue;
+    background-color: yellow; 
+    text-align: left;
+}
+
+.text_alignment{
+    text-align: center;
+}
+
+td, th {
+    border : 1px solid red;
+}
+
+th {
+    background-color: black;
+    color: white;
+}

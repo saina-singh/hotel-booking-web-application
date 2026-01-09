@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Contact Us</title>
+</head>
+
+<body bgcolor="#F0FFE6">
+
+  <h1>Contact Us</h1>
+
+  <p>
+    <a href="index.html">Home</a> |
+    <a href="modules.html">Modules</a> |
+    <a href="contact.html">Contact</a>
+  </p>
+
+  <form>
+    <p>Name:</p>
+    <input type="text" name="name" required maxlength="30">
+
+    <p>Email:</p>
+    <input type="email" name="email" required>
+
+    <p>Comments:</p>
+    <textarea name="comments" rows="5" cols="30" required></textarea>
+
+    <p>Reason for contact (dropdown):</p>
+    <select name="reason">
+      <option>Module enquiry</option>
+      <option>Timetable</option>
+      <option>Assessment</option>
+    </select>
+
+    <p>Choose services (checkboxes):</p>
+    <input type="checkbox" name="service" value="notes"> Notes
+    <input type="checkbox" name="service" value="support"> Support
+
+    <p>Student type (radio):</p>
+    <input type="radio" name="type" value="fulltime" required> Full-time
+    <input type="radio" name="type" value="parttime"> Part-time
+
+    <p><input type="submit" value="Submit"></p>
+  </form>
+
+</body>
+
+</html>

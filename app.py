@@ -91,8 +91,6 @@ def gallery():
 def deals():
     return render_template("deals.html")
 
-from flask import request  # make sure this is imported at top
-
 @app.route('/hotels')
 def hotels():
     searched_city = (request.args.get("city") or "").strip()
@@ -136,38 +134,29 @@ def hotels():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    msg = ''
     if request.method == 'POST':
-        email = request.form['email']   
+        email = request.form['email']
         password = request.form['password']
 
         cursor = db.cursor(dictionary=True)
-        cursor.execute(
-            "SELECT * FROM users WHERE email=%s AND is_active=%s",
-            (email, 1)
-        )
+        cursor.execute("SELECT * FROM users WHERE email=%s AND is_active=%s", (email, 1))
         user = cursor.fetchone()
+        cursor.close()
 
         if user and check_password_hash(user['password_hash'], password):
             session['loggedin'] = True
             session['user_id'] = user['user_id']
             session['email'] = user['email']
-            session['role'] = user['role']   # 'ADMIN' or 'CUSTOMER'
+            session['role'] = user['role']
             session['profile_image'] = user.get('profile_image')
 
-            if user['role'] == 'ADMIN':
-             redirect_url = url_for('admin_dashboard')
-            else:
-             redirect_url = url_for('user_dashboard')
+            flash("Logged in successfully!", "success")
 
+            return redirect(url_for('admin_dashboard' if user['role']=='ADMIN' else 'user_dashboard'))
 
-            response = make_response(redirect(redirect_url))
-            response.set_cookie('email', user['email'], max_age=60*60*24)
-            return response
-        else:
-            msg = "Invalid email or password"
+        flash("Invalid email or password.", "danger")
 
-    return render_template("login.html", msg=msg)
+    return render_template("login.html")
 
 @app.route('/admin/dashboard')
 def admin_dashboard():
@@ -249,6 +238,7 @@ def user_dashboard():
 @app.route('/logout')
 def logout():
     session.clear()
+    flash("You have been logged out.", "info")
     response = make_response(redirect(url_for('login')))
     response.delete_cookie('email')
     return response
@@ -264,13 +254,16 @@ def register():
             password   = request.form.get('password', '')
 
             if not first_name or not last_name or not email or not password:
+                flash("Please fill in all fields.", "danger")
                 return render_template("register.html", msg="Please fill in all fields.")
 
             cursor = db.cursor(dictionary=True)
             cursor.execute("SELECT user_id FROM users WHERE email=%s", (email,))
             if cursor.fetchone():
                 cursor.close()
+                flash("An account already exists with this email.", "warning")
                 return render_template("register.html", msg="Account already exists with this email.")
+
             hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
 
             cursor.execute("""
@@ -287,31 +280,38 @@ def register():
                 email_msg = Message('Activate Your Account', recipients=[email])
                 email_msg.body = f'Click the link to activate your account:\n{link}'
                 mail.send(email_msg)
-                msg = "Registration successful! Check your email to activate."
+
+                flash("Registration successful! Please check your email to activate your account.", "success")
+
             except Exception as e:
                 print("MAIL ERROR:", e)
-                msg = f"Registered, but email failed. Activate manually: {link}"
+                flash("Registered, but email failed. Please contact support.", "warning")
 
-            return render_template("register.html", msg=msg)
+            return redirect(url_for('login'))
 
         except Exception as e:
             print("REGISTER ERROR:", e)
-            return render_template("register.html", msg=f"Server error: {e}")
+            flash("Something went wrong. Please try again.", "danger")
+            return render_template("register.html", msg="Server error")
 
     return render_template("register.html", msg=msg)
+
 
 @app.route('/activate/<token>')
 def activate(token):
     try:
         email = serializer.loads(token, salt='email-confirm', max_age=3600)
     except:
-        return "Activation link expired"
+        flash("Activation link expired. Please register again.", "danger")
+        return redirect(url_for('register'))
 
     cursor = db.cursor()
     cursor.execute("UPDATE users SET is_active=1 WHERE email=%s", (email,))
     db.commit()
-    return "Account activated successfully!"
+    cursor.close()
 
+    flash("Account activated successfully! You can now log in.", "success")
+    return redirect(url_for('login'))
 
 @app.route('/user')
 def user():
@@ -575,8 +575,6 @@ def room_details(hotel_id, room_code):
 
     return render_template("room_details.html", hotel=hotel, room=room)
 
-from flask import flash, redirect, url_for  # make sure flash is imported (you already have it)
-
 @app.route('/book/<int:hotel_id>', methods=['POST'])
 def book(hotel_id):
     if not session.get('loggedin'):
@@ -667,7 +665,7 @@ def book(hotel_id):
         db.commit()
         cursor.close()
 
-        # ✅ ONLY NEW PART: success notification
+        # success notification
         payment_labels = {
             "CARD": "Card payment completed successfully.",
             "PAYPAL": "PayPal payment completed successfully.",

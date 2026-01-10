@@ -5,21 +5,142 @@
 {% endblock %}
 
 {% block body %}
-<div class="container mt-5" style="max-width: 450px;">
-  <h3 class="mb-3">Register</h3>
 
-  <form method="POST" action="{{ url_for('register') }}">
-    <input name="first_name" class="form-control mb-3" placeholder="First name" required>
-    <input name="last_name" class="form-control mb-3" placeholder="Last name" required>
+<div id="register" class="container my-5" style="max-width: 520px;">
+  <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+    <div class="p-4 p-md-5">
 
-    <input name="email" type="email" class="form-control mb-3" placeholder="Email" required>
-    <input name="password" type="password" class="form-control mb-3" placeholder="Password" required>
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+          <h3 class="fw-bold mb-1">Create your account</h3>
+          <div class="text-muted">Sign up to start booking hotels</div>
+        </div>
+        <span class="badge bg-dark rounded-pill px-3 py-2">World Hotels</span>
+      </div>
 
-    <button class="btn btn-dark w-100">Register</button>
-  </form>
+      {% if msg %}
+      <div class="alert alert-info mb-4">{{ msg }}</div>
+      {% endif %}
 
-  {% if msg %}
-  <p class="text-danger mt-3">{{ msg }}</p>
-  {% endif %}
+      <form method="POST" onsubmit="return validateRegisterForm()" novalidate>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">First name</label>
+            <input type="text" class="form-control" id="firstName" name="first_name" placeholder="e.g. Saina">
+            <div class="text-danger small mt-1" id="firstNameError"></div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Last name</label>
+            <input type="text" class="form-control" id="lastName" name="last_name" placeholder="e.g. Singh">
+            <div class="text-danger small mt-1" id="lastNameError"></div>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <label class="form-label fw-semibold">Email</label>
+          <input type="email" class="form-control" id="email" name="email" placeholder="you@example.com">
+          <div class="text-danger small mt-1" id="emailError"></div>
+        </div>
+
+        <div class="mt-3">
+          <label class="form-label fw-semibold">Password</label>
+          <div class="input-group">
+            <input type="password" class="form-control" id="password" name="password"
+              placeholder="Create a strong password">
+            <button class="btn btn-outline-dark" type="button" onclick="togglePassword()">
+              Show
+            </button>
+          </div>
+          <div class="text-muted small mt-2">
+            Must be 8–20 chars with uppercase, lowercase, number & special character.
+          </div>
+          <div class="text-danger small mt-1" id="passwordError"></div>
+        </div>
+
+        <div class="form-check mt-3">
+          <input class="form-check-input" type="checkbox" id="agree">
+          <label class="form-check-label" for="agree">
+            I agree to the terms & conditions
+          </label>
+          <div class="text-danger small mt-1" id="agreeError"></div>
+        </div>
+
+        <button class="btn btn-dark w-100 mt-4 py-2">
+          Register
+        </button>
+
+        <div class="text-center mt-3">
+          <span class="text-muted">Already have an account?</span>
+          <a href="{{ url_for('login') }}" class="fw-semibold text-decoration-none">Login</a>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
 </div>
+
+<script>
+  function togglePassword() {
+    const p = document.getElementById("password");
+    p.type = (p.type === "password") ? "text" : "password";
+  }
+
+  function validateRegisterForm() {
+    const firstName = document.getElementById("firstName").value.trim();
+    const lastName = document.getElementById("lastName").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const agree = document.getElementById("agree").checked;
+
+    // clear errors
+    document.getElementById("firstNameError").innerText = "";
+    document.getElementById("lastNameError").innerText = "";
+    document.getElementById("emailError").innerText = "";
+    document.getElementById("passwordError").innerText = "";
+    document.getElementById("agreeError").innerText = "";
+
+    let isValid = true;
+
+    if (firstName === "" || firstName.length < 2) {
+      document.getElementById("firstNameError").innerText = "Please enter a valid first name.";
+      isValid = false;
+    }
+
+    if (lastName === "" || lastName.length < 2) {
+      document.getElementById("lastNameError").innerText = "Please enter a valid last name.";
+      isValid = false;
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (email === "") {
+      document.getElementById("emailError").innerText = "Email is required.";
+      isValid = false;
+    } else if (!emailPattern.test(email)) {
+      document.getElementById("emailError").innerText = "Invalid email format.";
+      isValid = false;
+    }
+
+    const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,20}$/;
+    if (password === "") {
+      document.getElementById("passwordError").innerText = "Password is required.";
+      isValid = false;
+    } else if (!passwordPattern.test(password)) {
+      document.getElementById("passwordError").innerText =
+        "Password must be 8–20 chars with uppercase, lowercase, number & special character.";
+      isValid = false;
+    }
+
+    if (!agree) {
+      document.getElementById("agreeError").innerText = "You must agree before registering.";
+      isValid = false;
+    }
+
+    // If valid, let Flask handle DB insert + activation email
+    return isValid;
+  }
+</script>
+
 {% endblock %}

@@ -6,15 +6,41 @@
 
 {% block body %}
 
-<div class="row justify-content-center mt-5">
-  <div class="col-md-4">
-    <h3>Login</h3>
+<div id="login" class="container my-5 d-flex justify-content-center">
+  <div class="card shadow-lg border-0 rounded-4" style="max-width: 420px; width:100%;">
+    <div class="card-body p-4">
 
-    <form method="POST" action="{{ url_for('login') }}">
-      <input name="email" class="form-control mb-3" placeholder="Email" required>
-      <input name="password" type="password" class="form-control mb-3" placeholder="Password" required>
-      <button class="btn btn-dark w-100">Login</button>
-    </form>
+      <h3 class="fw-bold text-center mb-1">Welcome Back</h3>
+      <p class="text-muted text-center mb-4">Login to continue booking</p>
+
+      {% if msg %}
+      <div class="alert alert-danger small">{{ msg }}</div>
+      {% endif %}
+
+      <form method="POST">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Email address</label>
+          <input type="email" name="email" class="form-control form-control-lg" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Password</label>
+          <input type="password" name="password" class="form-control form-control-lg" required>
+        </div>
+
+        <button class="btn btn-dark w-100 py-2 fw-semibold">
+          Login
+        </button>
+      </form>
+
+      <div class="text-center mt-3">
+        <span class="text-muted">Don’t have an account?</span>
+        <a href="{{ url_for('register') }}#register" class="fw-semibold text-decoration-none">
+          Register
+        </a>
+      </div>
+
+    </div>
   </div>
 </div>
 

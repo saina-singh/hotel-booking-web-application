@@ -65,8 +65,14 @@
           </a>
           <a class="btn btn-dark btn-sm px-3" href="{{ url_for('logout') }}">Logout</a>
           {% else %}
-          <a class="btn btn-outline-dark btn-sm px-3" href="{{ url_for('register') }}">Register</a>
-          <a class="btn btn-dark btn-sm px-3" href="{{ url_for('login') }}">Login</a>
+          <a class="btn btn-outline-dark btn-sm px-3" href="{{ url_for('register') }}#register">
+            Register
+          </a>
+
+          <a class="btn btn-dark btn-sm px-3" href="{{ url_for('login') }}#login">
+            Login
+          </a>
+
           {% endif %}
         </div>
 

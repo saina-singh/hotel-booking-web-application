@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title> HTML 2 </title>
+	<script>
+		function myfunction(){	    	
+			document.getElementById("temp").innerHTML = localStorage.getItem("lastname");	
+		}	
+	</script>
+</head>
+<body>
+	<H1> Example2.HTML </H1>
+	<p id="temp1"></p>
+	<script>
+		document.getElementById("temp1").innerHTML = localStorage.getItem("lastname") + " + temp1";
+	</script>
+
+	<button type="button" onclick="myfunction()"> Click to receive values from HTML 1 </button> 
+	<p id="temp"></p>
+		
+</body>
+</html>

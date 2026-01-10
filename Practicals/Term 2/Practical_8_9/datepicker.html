@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<!-- Author: Zaheer Khan Date: 12 March 2022 
+    Desc: Date picker - Using simple JavaScript this code demonstrates how to disable past dates -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Date picker</title>
+    
+</head>
+
+
+<body onload="initialdate()">
+    <H1> JS Date functionality </H1>
+
+    <form action="" method="POST"> 
+
+        Demo:
+        Hard-coded Static date:
+        <input type="date" id="startdate1" min="2022-03-15">
+
+        <br>
+        Check-in Date:
+        <input type="date" id="startdate" min="1980-01-01" onchange="setenddate()">
+        <br>
+        Check-out Date:
+        <input type="date" id="enddate" min="1980-01-01">
+        <br>
+        <input type="submit">
+        </form>
+    
+    <script>
+
+       /* function validatedate(){
+            var selectedstartdate = document.getElementById("startdate").value;
+            alert(selectedstartdate);
+
+            var selectedenddate = document.getElementById("enddate").value;
+            alert(selectedenddate);
+            
+            if (selectedenddate < selectedstartdate) {    
+                alert('Check-out date must be after Check-in date!');
+                return false;            
+            } else
+                alert('Correct dates!');
+                return true;         
+        }*/
+
+        function setenddate(){
+            var selectedstartdate = document.getElementById("startdate").value;
+            //alert(selectedstartdate);
+            document.getElementById("enddate").min = selectedstartdate;
+            //var value = document.getElementById("enddate").min; 
+            //alert(value);
+        }
+
+        function initialdate(){
+            var today=new Date();
+            var year = today.getFullYear();
+            var month = today.getMonth() + 1;
+            var day = today.getDate();
+            
+            if (month < 10) {
+                month = '0' + month; 
+            }
+            if (day < 10) {
+                day = '0' + day; 
+            }
+
+            today = year + '-' + month + '-' + day;
+            
+           // alert(today);
+           // alert(day);
+           // alert(month);
+           // alert(year);
+           // alert(today);
+            document.getElementById("startdate").min = today;
+            //var value = document.getElementById("startdate").min; 
+           // alert(value);
+            
+        }
+    </script>
+</body>
+</html>

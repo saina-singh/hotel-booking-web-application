@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<head>    
+    <title>Hello World JavaScript</title>    
+    <script>
+        function calculate(){
+            let numb1 = document.getElementById("num1").value;            
+            let numb2 = document.getElementById("num2").value;            
+            numb1 = parseInt(numb1);
+            numb2 = parseInt(numb2);
+            let result = numb1 + numb2; 
+            document.getElementById("result").innerHTML = "Result is: " + result;
+        }        
+    </script>
+</head>
+<body>
+    <H1> Let's learn JavaScript </H1>    
+    Enter number 1: <input type="number" id="num1"><br>
+    Enter number 2: <input type="number" id="num2"><br>    
+    <button onclick="calculate()">Calculate Sum</button>
+    <p id="result"> </p>
+</body>
+</html>

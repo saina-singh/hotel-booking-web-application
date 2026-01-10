@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title> HTML 3 </title>	
+
+</head>
+<body>
+	<H1> Example3.HTML </H1>
+	
+	<p id="temp"></p>
+
+	<p id="temp1"></p>
+		
+		<script>
+
+			if (parent.document.URL.indexOf('myVar1')>0)
+			{
+				var a=parent.document.URL.substring(parent.document.URL.indexOf('myVar1='), (parent.document.URL.length));	
+				alert(a);
+				document.getElementById('temp').innerHTML = a;
+			}
+			else if (parent.document.URL.indexOf('myVar2')>0)
+			{
+				var b=parent.document.URL.substring(parent.document.URL.indexOf('myVar2='), (parent.document.URL.length));	
+				alert(b);
+				document.getElementById('temp1').innerHTML = b;
+			}
+				
+			
+  	    </script>
+</body>
+</html>

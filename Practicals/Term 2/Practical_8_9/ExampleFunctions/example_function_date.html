@@ -1,0 +1,26 @@
+<body>
+    <h1>Input Validation using Javascript</h1>
+    <p>Please enter a date:</p>
+    <input id="userdate" type="date">    
+    <button type="button" onclick="myFunction()">Submit</button>
+    <p id="temp"></p>
+    <!-- JS counts months from 0 to 11, default format is YYYY-MM-DD -->
+    <script>
+        function myFunction() {
+            var text;
+            //Date.parse() checks validity of date string and converts it into milliseconds from 1/1/1970
+            var userdate = Date.parse(document.getElementById("userdate").value); 
+            var userdate = new Date(userdate).setHours(0,0,0,0);                        
+            var today = new Date().setHours(0,0,0,0);                        
+            if (userdate < today) {
+                text = "Date entered is in past";
+            } else if (userdate > today){
+                text = "Date entered is in future";
+            } else {
+                text = "Date entered is today";
+            }
+            document.getElementById("temp").innerHTML = text;
+        }
+    </script>
+    </body>
+    </html>

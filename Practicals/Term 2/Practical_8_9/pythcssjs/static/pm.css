@@ -1,0 +1,17 @@
+body {
+        background:  #ffcfff;
+        font-family: arial;
+}
+
+
+.as1 { background-color: silver; font-size: 18px; color: indigo; padding: 10px; border-style: solid; border-left-width: 35px; border-color: black; 
+margin-left:444px;	width:300px;
+}
+.as2 { background-color: lightgreen; font-size: 18px; color: indigo; padding: 10px; border-style: solid; border-left-width: 35px; border-color: black; 
+margin-left:444px;	width:200px;
+}
+
+.as3 { background-color: aqua; font-size: 18px; color: indigo; padding: 10px; border-style: solid; border-left-width: 35px; border-color: black; width:666px;
+margin-left:444px;	width:300px;
+}
+

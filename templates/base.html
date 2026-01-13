@@ -81,7 +81,7 @@
   </header>
 
   <!-- Banner image ONLY on these pages -->
-  {% if endpoint in ['index', 'login', 'register'] %}
+  {% if endpoint in ['index', 'login', 'register'] and not endpoint.startswith('admin') %}
   <div class="container my-4">
     <img src="{{ url_for('static', filename='images/hotel_banner.png') }}" class="w-100 rounded-4"
       style="height: 520px; object-fit: cover; object-position: right center;" alt="Hotel Banner">
@@ -89,7 +89,7 @@
   {% endif %}
 
   <!-- CTA ONLY when NOT logged in -->
-  {% if not session.get('loggedin') %}
+  {% if not session.get('loggedin') and not endpoint.startswith('admin') %}
   <div class="container my-5 text-center p-5 bg-dark text-white rounded">
     <h3 class="fw-bold">Ready to plan your next trip?</h3>
     <p class="mt-2">Sign up now and get exclusive deals and discounts.</p>

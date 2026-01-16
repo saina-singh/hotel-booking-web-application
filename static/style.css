@@ -534,3 +534,45 @@ html {
 .text-purple {
   color: #7c3aed;
 }
+
+.admin-search {
+  position: relative;
+}
+
+.admin-search-dd {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 8px);
+  width: 100%;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .12);
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 9999;
+}
+
+.dd-title {
+  padding: 10px 12px;
+  font-weight: 800;
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: uppercase;
+  border-top: 1px solid #f1f5f9;
+}
+
+.dd-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  border-top: 1px solid #f8fafc;
+}
+
+.dd-item:hover {
+  background: #f8fafc;
+}
+
+.dd-muted {
+  color: #6b7280;
+  font-size: 12px;
+}

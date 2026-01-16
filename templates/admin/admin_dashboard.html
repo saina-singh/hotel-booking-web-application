@@ -73,7 +73,8 @@
         <div class="d-flex align-items-center gap-3 flex-wrap justify-content-end" style="flex:1;">
           <div class="admin-search">
             <i class="bi bi-search text-muted"></i>
-            <input type="text" placeholder="Search cities, rooms, etc..." />
+            <input id="adminSearchInput" type="text" placeholder="Search city, room, user..." />
+            <div id="adminSearchDropdown" class="admin-search-dd d-none"></div>
           </div>
 
           <div class="top-icons">
@@ -162,6 +163,7 @@
                   <option value="lastWeek">Last Week</option>
                   <option value="month">This Month</option>
                 </select>
+
               </div>
               <div style="height:170px;">
                 <canvas id="guestsChart"></canvas>
@@ -180,6 +182,7 @@
                   <option value="6m">Last 6 months</option>
                   <option value="year">This Year</option>
                 </select>
+
               </div>
               <div style="height:170px;">
                 <canvas id="revenueChart"></canvas>
@@ -240,7 +243,7 @@
               </div>
 
               <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table id="usersTable" class="table table-hover align-middle mb-0">
                   <thead class="table-light">
                     <tr>
                       <th style="width:80px;">ID</th>
@@ -447,6 +450,183 @@
   }
 
   initAdminCharts();
+
+  const searchInput = document.getElementById("adminSearchInput");
+  const usersTable = document.getElementById("usersTable");
+
+  function filterUsersTable(query) {
+    if (!usersTable) return;
+
+    const q = query.trim().toLowerCase();
+    const rows = usersTable.querySelectorAll("tbody tr");
+
+    rows.forEach(row => {
+      const text = row.innerText.toLowerCase();
+      row.style.display = text.includes(q) ? "" : "none";
+    });
+  }
+
+  function smartRedirect(query) {
+    const q = query.trim();
+    if (!q) return;
+
+    // room codes you use in DB/templates
+    const roomCodes = ["STANDARD", "DOUBLE", "FAMILY", "SINGLE", "DELUXE", "SUITE", "EXECUTIVE"];
+    const upper = q.toUpperCase();
+
+    const match = roomCodes.find(code =>
+      code.includes(upper) || upper.includes(code)
+    );
+
+    if (match) {
+      window.location.href = `{{ url_for('hotels') }}?room=${encodeURIComponent(match)}`;
+      return;
+    }
+
+    // Otherwise treat as city search
+    window.location.href = `{{ url_for('hotels') }}?city=${encodeURIComponent(q)}`;
+  }
+
+  if (searchInput) {
+    // live filter users table while typing
+    searchInput.addEventListener("input", (e) => {
+      filterUsersTable(e.target.value);
+    });
+
+    // Enter key redirects to hotels filtered by city/room
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        smartRedirect(searchInput.value);
+      }
+    });
+  }
+
+  const dropdown = document.getElementById("adminSearchDropdown");
+  let ddTimer = null;
+
+  function showDropdown(html) {
+    if (!dropdown) return;
+    dropdown.innerHTML = html;
+    dropdown.classList.remove("d-none");
+  }
+
+  function hideDropdown() {
+    if (!dropdown) return;
+    dropdown.classList.add("d-none");
+    dropdown.innerHTML = "";
+  }
+
+  function esc(s) {
+    return (s ?? "").toString().replace(/[&<>"']/g, m => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[m]));
+  }
+
+  async function fetchAdminSearch(q) {
+    const res = await fetch(`/admin/search?q=${encodeURIComponent(q)}`);
+    if (!res.ok) return { cities: [], rooms: [], users: [] };
+    return await res.json();
+  }
+
+  function renderResults(data) {
+    const cities = data.cities || [];
+    const rooms = data.rooms || [];
+    const users = data.users || [];
+
+    if (!cities.length && !rooms.length && !users.length) {
+      showDropdown(`<div class="p-3 text-muted small">No results</div>`);
+      return;
+    }
+
+    let html = "";
+
+    if (cities.length) {
+      html += `<div class="dd-title">Cities</div>`;
+      cities.forEach(c => {
+        html += `
+          <div class="dd-item" data-type="city" data-value="${esc(c.name)}">
+            <b>${esc(c.name)}</b>
+          </div>`;
+      });
+    }
+
+    if (rooms.length) {
+      html += `<div class="dd-title">Room types</div>`;
+      rooms.forEach(r => {
+        html += `
+          <div class="dd-item" data-type="room" data-value="${esc(r.code)}">
+            <b>${esc(r.code)}</b> <span class="dd-muted">• max ${esc(r.max_guests)}</span>
+          </div>`;
+      });
+    }
+
+    if (users.length) {
+      html += `<div class="dd-title">Users</div>`;
+      users.forEach(u => {
+        const full = `${u.first_name} ${u.last_name}`.trim();
+        html += `
+          <div class="dd-item" data-type="user" data-userid="${u.user_id}">
+            <b>${esc(full)}</b> <span class="dd-muted">• ${esc(u.email)} • ${esc(u.role)}</span>
+          </div>`;
+      });
+    }
+
+    showDropdown(html);
+  }
+
+  // Hook into your existing search input
+  if (searchInput) {
+    searchInput.addEventListener("input", () => {
+      // keep your existing table filter
+      filterUsersTable(searchInput.value);
+
+      const q = searchInput.value.trim();
+      if (!q) { hideDropdown(); return; }
+
+      clearTimeout(ddTimer);
+      ddTimer = setTimeout(async () => {
+        const data = await fetchAdminSearch(q);
+        renderResults(data);
+      }, 250);
+    });
+  }
+
+  // click actions for dropdown items
+  if (dropdown) {
+    dropdown.addEventListener("click", (e) => {
+      const item = e.target.closest(".dd-item");
+      if (!item) return;
+
+      const type = item.dataset.type;
+
+      if (type === "city") {
+        const city = item.dataset.value;
+        window.location.href = `{{ url_for('hotels') }}?city=${encodeURIComponent(city)}`;
+      }
+
+      if (type === "room") {
+        const code = item.dataset.value;
+        window.location.href = `{{ url_for('hotels') }}?room=${encodeURIComponent(code)}`;
+      }
+
+      if (type === "user") {
+        // simplest: just fill the input to filter the admin table
+        const userId = item.dataset.userid;
+        searchInput.value = userId;
+        filterUsersTable(userId);
+      }
+
+      hideDropdown();
+    });
+  }
+
+  // hide dropdown when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!dropdown || !searchInput) return;
+    if (!dropdown.contains(e.target) && e.target !== searchInput) hideDropdown();
+  });
+
 </script>
 
 

@@ -4,7 +4,7 @@ from itsdangerous import URLSafeTimedSerializer
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
-from flask import flash
+from flask import flash, jsonify
 from datetime import date
 
 import os
@@ -94,15 +94,39 @@ def deals():
 @app.route('/hotels')
 def hotels():
     searched_city = (request.args.get("city") or "").strip()
+    room = (request.args.get("room") or "").strip().upper()
 
     cursor = db.cursor(dictionary=True)
-    cursor.execute("""
-        SELECT h.hotel_id, c.name AS city, h.hotel_name
+
+    sql = """
+        SELECT DISTINCT h.hotel_id, c.name AS city, h.hotel_name
         FROM hotels h
         JOIN cities c ON c.city_id = h.city_id
         WHERE h.is_active = 1
-        ORDER BY c.name
-    """)
+    """
+    params = []
+
+    # filter by city
+    if searched_city:
+        sql += " AND c.name LIKE %s"
+        params.append(f"%{searched_city}%")
+
+    # filter by room type
+    if room:
+        sql += """
+            AND EXISTS (
+                SELECT 1
+                FROM hotel_room_inventory inv
+                JOIN room_types rt ON rt.room_type_id = inv.room_type_id
+                WHERE inv.hotel_id = h.hotel_id
+                  AND rt.code = %s
+            )
+        """
+        params.append(room)
+
+    sql += " ORDER BY c.name"
+
+    cursor.execute(sql, tuple(params))
     hotels_list = cursor.fetchall()
     cursor.close()
 
@@ -130,7 +154,7 @@ def hotels():
         filename = city_images.get(h["city"], "default.jpg")
         h["img"] = f"images/hotels/{filename}"
 
-    return render_template("hotels.html", hotels=hotels_list, searched_city=searched_city)
+    return render_template("hotels.html", hotels=hotels_list, searched_city=searched_city, searched_room=room)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -823,6 +847,53 @@ def payment(booking_id):
     cursor.close()
     return render_template("payment.html", summary=summary, msg=msg)
 
+@app.route("/admin/search")
+def admin_search():
+    # admin-only
+    if not (session.get("loggedin") and session.get("role") == "ADMIN"):
+        return jsonify({"error": "unauthorized"}), 403
+
+    q = (request.args.get("q") or "").strip()
+    if not q:
+        return jsonify({"cities": [], "rooms": [], "users": []})
+
+    like = f"%{q}%"
+    cursor = db.cursor(dictionary=True)
+
+    # Cities
+    cursor.execute("""
+        SELECT city_id, name
+        FROM cities
+        WHERE name LIKE %s
+        ORDER BY name
+        LIMIT 8
+    """, (like,))
+    cities = cursor.fetchall()
+
+    # Rooms (room types)
+    cursor.execute("""
+        SELECT room_type_id, code, max_guests
+        FROM room_types
+        WHERE code LIKE %s
+        ORDER BY code
+        LIMIT 8
+    """, (like.upper(),))
+    rooms = cursor.fetchall()
+
+    # Users
+    cursor.execute("""
+        SELECT user_id, first_name, last_name, email, role
+        FROM users
+        WHERE first_name LIKE %s
+           OR last_name LIKE %s
+           OR email LIKE %s
+        ORDER BY user_id DESC
+        LIMIT 8
+    """, (like, like, like))
+    users = cursor.fetchall()
+
+    cursor.close()
+    return jsonify({"cities": cities, "rooms": rooms, "users": users})
     
 if __name__== '__main__':
     app.run(host="127.0.0.1", port=5000, debug=True)

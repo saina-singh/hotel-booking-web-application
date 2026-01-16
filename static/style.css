@@ -36,7 +36,6 @@ a:hover {
   position: absolute;
   top: 45px;
   left: 12px;
-  /* ✅ small fix so it respects padding */
   z-index: 2;
 }
 
@@ -56,14 +55,12 @@ a:hover {
   left: 12px;
   right: 12px;
   bottom: 30px;
-  /* ✅ less gap and looks cleaner */
   width: auto;
   max-width: none;
 
   background: #fff;
   border-radius: 22px;
   padding: 18px 18px;
-  /* ✅ not too tiny, not too huge */
   min-height: 140px;
 
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.15);
@@ -129,21 +126,21 @@ a:hover {
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 576px) {
   .banner-section {
-    height: 600px;
+    height: 520px;
+    border-radius: 18px;
+  }
+
+  .search-box.search-on-banner {
+    border-radius: 18px;
+    padding: 16px;
   }
 
   .banner-content {
     top: 60px;
     left: 25px;
     right: 25px;
-  }
-
-  .search-box.search-on-banner {
-    bottom: 15px;
-    padding: 18px;
-    min-height: auto;
   }
 }
 
@@ -575,4 +572,99 @@ html {
 .dd-muted {
   color: #6b7280;
   font-size: 12px;
+}
+
+@media (max-width: 576px) {
+
+  h2,
+  h3 {
+    font-size: 22px;
+  }
+
+  .card {
+    border-radius: 16px;
+  }
+
+  .card-img-top {
+    height: 160px;
+  }
+}
+
+/* Keep your nav links looking like your original design */
+.nav-center {
+  gap: 55px;
+  /* keep your spacing */
+}
+
+.nav-center a {
+  font-weight: 700;
+  /* keep bold */
+  letter-spacing: 0.3px;
+  padding: 6px 4px;
+  text-decoration: none;
+  color: #111;
+}
+
+/* prevent bootstrap navbar styles from changing your links */
+.navbar .nav-link {
+  font-weight: 700 !important;
+  padding: 6px 4px !important;
+}
+
+@media (max-width: 768px) {
+  .nav-center {
+    gap: 16px;
+    flex-wrap: wrap;
+    /* allows wrap instead of squeezing */
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  header .container .d-flex.align-items-center {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  /* Logo stays top-left */
+  header a.fw-bold.fs-4 {
+    flex: 1 1 auto;
+  }
+
+  /* Nav becomes a centered "pill row" under logo */
+  header nav.mx-auto {
+    order: 3;
+    flex: 1 1 100%;
+    margin: 0 !important;
+  }
+
+  .nav-center {
+    justify-content: center;
+    gap: 14px !important;
+    flex-wrap: wrap;
+    padding: 8px 10px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 14px;
+    background: #fff;
+  }
+
+  .nav-center a {
+    font-size: 14px;
+    padding: 6px 8px;
+  }
+
+  /* Right side buttons move to top-right */
+  header .d-flex.align-items-center.gap-3 {
+    order: 2;
+    margin-left: auto;
+    gap: 10px !important;
+  }
+
+  /* Clock already hidden on mobile via d-none d-md-flex, keep it */
+}
+
+@media (max-width: 768px) {
+  header a.fw-bold.fs-4 {
+    font-size: 20px !important;
+  }
 }

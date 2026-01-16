@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block head %}<title>Receipt • {{ r.booking_code }}</title>{% endblock %}
+
+{% block body %}
+<div class="container my-4" style="max-width: 900px;">
+
+  <div class="card shadow-sm">
+    <div class="card-body p-4">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+          <h3 class="fw-bold mb-1">Booking Receipt</h3>
+          <div class="text-muted">Receipt for booking <b>{{ r.booking_code }}</b></div>
+        </div>
+
+        <div class="text-end">
+          <div class="text-muted small">Status</div>
+          <span class="badge bg-success">{{ r.booking_status }}</span>
+          <div class="text-muted small mt-2">Created</div>
+          <div class="fw-semibold">{{ r.created_at }}</div>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="fw-bold mb-1">Guest</div>
+          <div>{{ r.first_name }} {{ r.last_name }}</div>
+          <div class="text-muted">{{ r.email }}</div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="fw-bold mb-1">Hotel</div>
+          <div>{{ r.hotel_name }}</div>
+          <div class="text-muted">{{ r.city }}</div>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="text-muted small">Check-in</div>
+          <div class="fw-semibold">{{ r.check_in }}</div>
+        </div>
+        <div class="col-md-4">
+          <div class="text-muted small">Check-out</div>
+          <div class="fw-semibold">{{ r.check_out }}</div>
+        </div>
+        <div class="col-md-4">
+          <div class="text-muted small">Payment method</div>
+          <div class="fw-semibold">{{ r.provider }}</div>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <div class="text-muted small">Total (base GBP)</div>
+          <div class="fw-bold fs-4">£{{ r.total_gbp }}</div>
+        </div>
+
+        <div class="d-flex gap-2">
+          <a class="btn btn-outline-dark" href="{{ url_for('user_dashboard') }}">Back</a>
+          <a class="btn btn-dark" href="{{ url_for('receipt_pdf', booking_id=r.booking_id) }}">Download PDF</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const bookingId = {{ r.booking_id }
+  };
+  const pdfUrl = "{{ url_for('receipt_pdf', booking_id=r.booking_id) }}";
+  const goUrl = "{{ url_for('user_dashboard') }}";
+
+  // download in background (doesn't navigate away)
+  const iframe = document.createElement("iframe");
+  iframe.style.display = "none";
+  iframe.src = pdfUrl;
+  document.body.appendChild(iframe);
+
+  // redirect after a short delay no matter what
+  setTimeout(() => {
+    window.location.href = goUrl;
+  }, 2500);
+  });
+</script>
+
+{% endblock %}

@@ -4,8 +4,9 @@ from itsdangerous import URLSafeTimedSerializer
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
-from flask import flash, jsonify
+from flask import flash, jsonify, send_file
 from datetime import date
+from io import BytesIO
 
 import os
 from werkzeug.utils import secure_filename
@@ -320,7 +321,6 @@ def register():
 
     return render_template("register.html", msg=msg)
 
-
 @app.route('/activate/<token>')
 def activate(token):
     try:
@@ -405,9 +405,6 @@ def profile():
     cursor.close()
 
     return render_template("profile.html", me=me, msg=msg)
-
-
-from datetime import date
 
 @app.route('/hotels/<int:hotel_id>')
 def hotel_details(hotel_id):
@@ -698,7 +695,7 @@ def book(hotel_id):
         }
         flash(payment_labels.get(payment_method, "Payment completed successfully."), "success")
 
-        return redirect(url_for('user_dashboard'))
+        return redirect(url_for("receipt_download", booking_id=booking_id))
 
     except Exception as e:
         import traceback
@@ -894,6 +891,133 @@ def admin_search():
 
     cursor.close()
     return jsonify({"cities": cities, "rooms": rooms, "users": users})
+
+@app.route("/receipt/<int:booking_id>")
+def receipt(booking_id):
+    if not session.get("loggedin"):
+        return redirect(url_for("login"))
+
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT
+          b.booking_id, b.booking_code, b.booking_status, b.created_at,
+          b.check_in, b.check_out, b.total_gbp,
+          u.first_name, u.last_name, u.email,
+          h.hotel_name, c.name AS city,
+          COALESCE(p.provider, '') AS provider
+        FROM bookings b
+        JOIN users u ON u.user_id = b.user_id
+        JOIN hotels h ON h.hotel_id = b.hotel_id
+        JOIN cities c ON c.city_id = h.city_id
+        LEFT JOIN payments p ON p.booking_id = b.booking_id
+        WHERE b.booking_id = %s
+        LIMIT 1
+    """, (booking_id,))
+    r = cursor.fetchone()
+    cursor.close()
+
+    if not r:
+        return "Receipt not found", 404
+
+    # security: user can only view their own receipt unless admin
+    if session.get("role") != "ADMIN" and r["email"] != session.get("email"):
+        return "Not allowed", 403
+
+    return render_template("receipt.html", r=r)
+
+@app.route("/receipt/<int:booking_id>/pdf")
+def receipt_pdf(booking_id):
+    if not session.get("loggedin"):
+        return redirect(url_for("login"))
+
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT
+          b.booking_id, b.booking_code, b.booking_status, b.created_at,
+          b.check_in, b.check_out, b.total_gbp,
+          u.first_name, u.last_name, u.email,
+          h.hotel_name, c.name AS city,
+          COALESCE(p.provider, '') AS provider
+        FROM bookings b
+        JOIN users u ON u.user_id = b.user_id
+        JOIN hotels h ON h.hotel_id = b.hotel_id
+        JOIN cities c ON c.city_id = h.city_id
+        LEFT JOIN payments p ON p.booking_id = b.booking_id
+        WHERE b.booking_id = %s
+        LIMIT 1
+    """, (booking_id,))
+    r = cursor.fetchone()
+    cursor.close()
+
+    if not r:
+        return "Receipt not found", 404
+
+    if session.get("role") != "ADMIN" and r["email"] != session.get("email"):
+        return "Not allowed", 403
+
+    # --- build PDF ---
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas
+
+    buf = BytesIO()
+    c = canvas.Canvas(buf, pagesize=A4)
+    width, height = A4
+
+    y = height - 60
+    c.setFont("Helvetica-Bold", 18)
+    c.drawString(50, y, "World Hotels — Booking Receipt")
+
+    y -= 30
+    c.setFont("Helvetica", 11)
+    c.drawString(50, y, f"Booking Code: {r['booking_code']}")
+    y -= 18
+    c.drawString(50, y, f"Status: {r['booking_status']}")
+    y -= 18
+    c.drawString(50, y, f"Created: {r['created_at']}")
+
+    y -= 24
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(50, y, "Guest")
+    y -= 16
+    c.setFont("Helvetica", 11)
+    c.drawString(50, y, f"{r['first_name']} {r['last_name']}  •  {r['email']}")
+
+    y -= 24
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(50, y, "Hotel")
+    y -= 16
+    c.setFont("Helvetica", 11)
+    c.drawString(50, y, f"{r['hotel_name']}  •  {r['city']}")
+
+    y -= 24
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(50, y, "Stay & Payment")
+    y -= 16
+    c.setFont("Helvetica", 11)
+    c.drawString(50, y, f"Check-in: {r['check_in']}   Check-out: {r['check_out']}")
+    y -= 16
+    c.drawString(50, y, f"Payment Method: {r['provider']}")
+
+    y -= 28
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(50, y, f"Total (GBP):  £{r['total_gbp']}")
+
+    y -= 40
+    c.setFont("Helvetica", 10)
+    c.drawString(50, y, "Thank you for booking with World Hotels!")
+
+    c.showPage()
+    c.save()
+
+    buf.seek(0)
+    filename = f"receipt_{r['booking_code']}.pdf"
+    return send_file(buf, as_attachment=True, download_name=filename, mimetype="application/pdf")
+
+@app.route("/receipt/<int:booking_id>/download")
+def receipt_download(booking_id):
+    if not session.get("loggedin"):
+        return redirect(url_for("login"))
+    return render_template("receipt_download.html", booking_id=booking_id)
     
 if __name__== '__main__':
     app.run(host="127.0.0.1", port=5000, debug=True)

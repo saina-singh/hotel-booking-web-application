@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block head %}
+<title>Downloading receipt…</title>
+<meta http-equiv="refresh" content="2;url={{ url_for('user_dashboard') }}">
+{% endblock %}
+
+{% block body %}
+<div class="container my-5" style="max-width: 900px;">
+  <div class="card shadow-sm">
+    <div class="card-body p-4 text-center">
+      <div style="font-size:40px;">✅</div>
+      <h4 class="fw-bold mb-2">Booking confirmed!</h4>
+      <p class="text-muted mb-3">Your receipt is downloading now.</p>
+
+      <div class="spinner-border" role="status" aria-hidden="true"></div>
+      <div class="text-muted small mt-3">Taking you back to your dashboard…</div>
+
+      <div class="mt-4">
+        <a class="btn btn-dark" href="{{ url_for('receipt_pdf', booking_id=booking_id) }}">
+          Download again
+        </a>
+        <a class="btn btn-outline-dark ms-2" href="{{ url_for('user_dashboard') }}">
+          Go now
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.addEventListener("DOMContentLoaded", () => {
+    const iframe = document.createElement("iframe");
+    iframe.style.display = "none";
+    iframe.src = "{{ url_for('receipt_pdf', booking_id=booking_id) }}";
+    document.body.appendChild(iframe);
+  });
+</script>
+
+{% endblock %}

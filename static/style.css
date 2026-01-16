@@ -515,6 +515,7 @@ html {
   }
 
   .admin-sidebar {
+    margin-left: 0;
     width: 100%;
     position: relative;
   }
@@ -522,4 +523,10 @@ html {
   .admin-main {
     padding-left: 0;
   }
+}
+
+/* Make admin dashboard align with navbar container */
+.admin-page {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }

@@ -7,13 +7,13 @@
 {% block body %}
 
 
-<div class="container my-4">
+<div class="container my-4 admin-page">
 
   <div class="admin-shell">
 
     <!-- SIDEBAR -->
     <aside class="admin-sidebar">
-      <div class="admin-brand">World Hotels</div>
+      <div class="admin-brand">Admin Dashboard</div>
 
       <nav class="admin-nav">
         <a class="active" href="{{ url_for('admin_dashboard') }}">
@@ -79,16 +79,6 @@
           <div class="top-icons">
             <button class="icon-btn" type="button" title="Messages"><i class="bi bi-chat-dots"></i></button>
             <button class="icon-btn" type="button" title="Notifications"><i class="bi bi-bell"></i></button>
-          </div>
-
-          <div class="admin-profile">
-            <div class="admin-avatar">
-              {{ (session.get('email','A'))[0].upper() }}
-            </div>
-            <div class="d-none d-md-block">
-              <div class="fw-bold">Saina Singh</div>
-              <div class="text-muted small">Admin</div>
-            </div>
           </div>
         </div>
       </div>
@@ -213,7 +203,7 @@
               {% set rows = [
               ('Cleanliness', 48),
               ('Facilities', 49),
-              ('Location', 47),
+              ('Location', 48),
               ('Service', 48),
               ('Value', 49)
               ] %}

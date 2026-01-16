@@ -157,13 +157,15 @@
             <div class="card-body">
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <div class="panel-title">Guests</div>
-                <select class="form-select form-select-sm" style="max-width: 140px;">
-                  <option>This Week</option>
-                  <option>Last Week</option>
-                  <option>This Month</option>
+                <select id="guestsRange" class="form-select form-select-sm" style="max-width: 140px;">
+                  <option value="week" selected>This Week</option>
+                  <option value="lastWeek">Last Week</option>
+                  <option value="month">This Month</option>
                 </select>
               </div>
-              <div class="chart-placeholder">Line chart placeholder</div>
+              <div style="height:170px;">
+                <canvas id="guestsChart"></canvas>
+              </div>
             </div>
           </div>
         </div>
@@ -173,13 +175,15 @@
             <div class="card-body">
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <div class="panel-title">Revenue</div>
-                <select class="form-select form-select-sm" style="max-width: 160px;">
-                  <option>Last 8 months</option>
-                  <option>Last 6 months</option>
-                  <option>This Year</option>
+                <select id="revenueRange" class="form-select form-select-sm" style="max-width: 160px;">
+                  <option value="8m" selected>Last 8 months</option>
+                  <option value="6m">Last 6 months</option>
+                  <option value="year">This Year</option>
                 </select>
               </div>
-              <div class="chart-placeholder">Bar chart placeholder</div>
+              <div style="height:170px;">
+                <canvas id="revenueChart"></canvas>
+              </div>
             </div>
           </div>
         </div>
@@ -203,7 +207,7 @@
               {% set rows = [
               ('Cleanliness', 48),
               ('Facilities', 49),
-              ('Location', 48),
+              ('Location', 50),
               ('Service', 48),
               ('Value', 49)
               ] %}
@@ -286,7 +290,9 @@
               </div>
 
               <div class="d-flex align-items-center gap-3 mt-3">
-                <div style="font-size: 34px;">🛋️</div>
+                <div style="font-size: 34px;">
+                  <i class="bi bi-building text-secondary"></i>
+                </div>
                 <div>
                   <div class="fw-bold" style="font-size: 26px;">90</div>
                   <div class="text-muted small">Total Rooms</div>
@@ -295,19 +301,19 @@
 
               <div class="mt-3 small">
                 <div class="d-flex justify-content-between py-2 border-bottom">
-                  <span>🔵 48 occupied</span>
+                  <span><i class="bi bi-circle-fill text-primary me-2"></i>48 occupied</span>
                   <span class="text-muted">today</span>
                 </div>
                 <div class="d-flex justify-content-between py-2 border-bottom">
-                  <span>🟣 13 reserved</span>
+                  <span><i class="bi bi-circle-fill text-purple me-2"></i>13 reserved</span>
                   <span class="text-muted">upcoming</span>
                 </div>
                 <div class="d-flex justify-content-between py-2 border-bottom">
-                  <span>🟢 20 available</span>
+                  <span><i class="bi bi-circle-fill text-success me-2"></i>20 available</span>
                   <span class="text-muted">ready</span>
                 </div>
                 <div class="d-flex justify-content-between py-2">
-                  <span>⚫ 9 not ready</span>
+                  <span><i class="bi bi-circle-fill text-dark me-2"></i>9 not ready</span>
                   <span class="text-muted">maintenance</span>
                 </div>
               </div>
@@ -320,5 +326,128 @@
     </main>
   </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  Chart.defaults.font.family = "Arial, Helvetica, sans-serif";
+  Chart.defaults.color = "#6b7280";
+
+  // -------------------------
+  // DATASETS
+  // -------------------------
+  const guestsDataSets = {
+    week: {
+      labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+      data: [34, 41, 38, 55, 49, 62, 58]
+    },
+    lastWeek: {
+      labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+      data: [28, 33, 31, 40, 44, 50, 47]
+    },
+    month: {
+      labels: ["W1", "W2", "W3", "W4"],
+      data: [210, 248, 231, 265]
+    }
+  };
+
+  const revenueDataSets = {
+    "8m": {
+      labels: ["Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"],
+      data: [4200, 3800, 5100, 6000, 7200, 6800, 5300, 6100]
+    },
+    "6m": {
+      labels: ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar"],
+      data: [5100, 6000, 7200, 6800, 5300, 6100]
+    },
+    year: {
+      labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+      data: [6800, 5300, 6100, 5900, 6400, 7000, 7200, 4200, 3800, 5100, 6000, 7200]
+    }
+  };
+
+  // -------------------------
+  // CREATE CHARTS
+  // -------------------------
+  const guestsCanvas = document.getElementById("guestsChart");
+  const revenueCanvas = document.getElementById("revenueChart");
+
+  let guestsChart = null;
+  let revenueChart = null;
+
+  function buildGuestsChart(rangeKey) {
+    const set = guestsDataSets[rangeKey] || guestsDataSets.week;
+
+    if (guestsChart) guestsChart.destroy();
+
+    guestsChart = new Chart(guestsCanvas, {
+      type: "line",
+      data: {
+        labels: set.labels,
+        datasets: [{
+          label: "Guests",
+          data: set.data,
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  function buildRevenueChart(rangeKey) {
+    const set = revenueDataSets[rangeKey] || revenueDataSets["8m"];
+
+    if (revenueChart) revenueChart.destroy();
+
+    revenueChart = new Chart(revenueCanvas, {
+      type: "bar",
+      data: {
+        labels: set.labels,
+        datasets: [{
+          label: "Revenue (£)",
+          data: set.data,
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { beginAtZero: true }
+        }
+      }
+    });
+  }
+
+  // -------------------------
+  // INIT + DROPDOWN LISTENERS
+  // -------------------------
+  function initAdminCharts() {
+    if (!guestsCanvas || !revenueCanvas) return;
+
+    const guestsSelect = document.getElementById("guestsRange");
+    const revenueSelect = document.getElementById("revenueRange");
+
+    buildGuestsChart(guestsSelect?.value || "week");
+    buildRevenueChart(revenueSelect?.value || "8m");
+
+    guestsSelect?.addEventListener("change", (e) => buildGuestsChart(e.target.value));
+    revenueSelect?.addEventListener("change", (e) => buildRevenueChart(e.target.value));
+  }
+
+  initAdminCharts();
+</script>
+
 
 {% endblock %}

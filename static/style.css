@@ -530,3 +530,7 @@ html {
   padding-left: 0 !important;
   padding-right: 0 !important;
 }
+
+.text-purple {
+  color: #7c3aed;
+}

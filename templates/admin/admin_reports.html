@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block head %}
+<title>Admin • Reports</title>
+{% endblock %}
+
+{% block body %}
+<div class="admin-layout">
+
+  <aside class="admin-sidebar">
+    <div class="admin-brand">Admin Dashboard</div>
+    <nav class="admin-nav">
+      <a href="{{ url_for('admin_dashboard') }}" class="{% if endpoint == 'admin_dashboard' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-speedometer2"></i></div>
+        <div class="fw-semibold">Dashboard</div>
+      </a>
+      <a href="{{ url_for('admin_reservations') }}" class="{% if endpoint == 'admin_reservations' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-calendar-check"></i></div>
+        <div class="fw-semibold">Reservations</div>
+      </a>
+      <a href="{{ url_for('admin_rooms') }}" class="{% if endpoint == 'admin_rooms' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-door-open"></i></div>
+        <div class="fw-semibold">Rooms</div>
+      </a>
+      <a href="{{ url_for('admin_staffs') }}" class="{% if endpoint == 'admin_staffs' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-people"></i></div>
+        <div class="fw-semibold">Staffs</div>
+      </a>
+      <a href="{{ url_for('admin_analytics') }}" class="{% if endpoint == 'admin_analytics' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-bar-chart"></i></div>
+        <div class="fw-semibold">Analytics</div>
+      </a>
+      <a href="{{ url_for('admin_reports') }}" class="{% if endpoint == 'admin_reports' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-file-earmark-text"></i></div>
+        <div class="fw-semibold">Reports</div>
+      </a>
+      <a href="{{ url_for('admin_settings') }}" class="{% if endpoint == 'admin_settings' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-gear"></i></div>
+        <div class="fw-semibold">Settings</div>
+      </a>
+      <a href="{{ url_for('admin_users') }}" class="{% if endpoint == 'admin_users' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-person-badge"></i></div>
+        <div class="fw-semibold">Users</div>
+      </a>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+    {% include "admin/_admin_topbar.html" with context %}
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+      <div>
+        <h3 class="fw-bold mb-1">Reports</h3>
+        <div class="text-muted">Generate structured summaries for admin use.</div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="fw-bold">Monthly Sales</div>
+                <div class="text-muted small">Confirmed bookings revenue grouped by month.</div>
+              </div>
+              <i class="bi bi-graph-up fs-4"></i>
+            </div>
+            <hr>
+            <div class="d-flex gap-2">
+              <a class="btn btn-dark" href="#">Generate</a>
+              <a class="btn btn-outline-dark" href="#">Download</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="fw-bold">Top Customers</div>
+                <div class="text-muted small">Customers sorted by total spend.</div>
+              </div>
+              <i class="bi bi-person-lines-fill fs-4"></i>
+            </div>
+            <hr>
+            <div class="d-flex gap-2">
+              <a class="btn btn-dark" href="#">Generate</a>
+              <a class="btn btn-outline-dark" href="#">Download</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="fw-bold">Sales Per Hotel</div>
+                <div class="text-muted small">Revenue comparison between cities.</div>
+              </div>
+              <i class="bi bi-building fs-4"></i>
+            </div>
+            <hr>
+            <div class="d-flex gap-2">
+              <a class="btn btn-dark" href="#">Generate</a>
+              <a class="btn btn-outline-dark" href="#">Download</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="fw-bold">Cancellation Fees</div>
+                <div class="text-muted small">Total fees collected from cancellations.</div>
+              </div>
+              <i class="bi bi-x-circle fs-4"></i>
+            </div>
+            <hr>
+            <div class="d-flex gap-2">
+              <a class="btn btn-dark" href="#">Generate</a>
+              <a class="btn btn-outline-dark" href="#">Download</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="text-muted small mt-3">
+      These buttons are placeholders. If you want, I can add routes that actually generate these using your SQL queries.
+    </div>
+  </main>
+</div>
+{% endblock %}

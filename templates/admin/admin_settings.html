@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block head %}
+<title>Admin • Settings</title>
+{% endblock %}
+
+{% block body %}
+<div class="admin-layout">
+
+  <aside class="admin-sidebar">
+    <div class="admin-brand">Admin Dashboard</div>
+    <nav class="admin-nav">
+      <a href="{{ url_for('admin_dashboard') }}" class="{% if endpoint == 'admin_dashboard' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-speedometer2"></i></div>
+        <div class="fw-semibold">Dashboard</div>
+      </a>
+      <a href="{{ url_for('admin_reservations') }}" class="{% if endpoint == 'admin_reservations' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-calendar-check"></i></div>
+        <div class="fw-semibold">Reservations</div>
+      </a>
+      <a href="{{ url_for('admin_rooms') }}" class="{% if endpoint == 'admin_rooms' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-door-open"></i></div>
+        <div class="fw-semibold">Rooms</div>
+      </a>
+      <a href="{{ url_for('admin_staffs') }}" class="{% if endpoint == 'admin_staffs' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-people"></i></div>
+        <div class="fw-semibold">Staffs</div>
+      </a>
+      <a href="{{ url_for('admin_analytics') }}" class="{% if endpoint == 'admin_analytics' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-bar-chart"></i></div>
+        <div class="fw-semibold">Analytics</div>
+      </a>
+      <a href="{{ url_for('admin_reports') }}" class="{% if endpoint == 'admin_reports' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-file-earmark-text"></i></div>
+        <div class="fw-semibold">Reports</div>
+      </a>
+      <a href="{{ url_for('admin_settings') }}" class="{% if endpoint == 'admin_settings' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-gear"></i></div>
+        <div class="fw-semibold">Settings</div>
+      </a>
+      <a href="{{ url_for('admin_users') }}" class="{% if endpoint == 'admin_users' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-person-badge"></i></div>
+        <div class="fw-semibold">Users</div>
+      </a>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+    {% include "admin/_admin_topbar.html" with context %}
+
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+      <div>
+        <h3 class="fw-bold mb-1">Settings</h3>
+        <div class="text-muted">System preferences and admin controls.</div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-lg-6">
+        <div class="card shadow-sm">
+          <div class="card-body p-4">
+            <div class="fw-bold mb-2">General</div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Site name</label>
+              <input class="form-control" value="World Hotels" disabled>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Base currency</label>
+              <select class="form-select" disabled>
+                <option selected>GBP</option>
+                <option>USD</option>
+                <option>EUR</option>
+                <option>NRS</option>
+              </select>
+              <div class="text-muted small mt-1">Your database uses GBP as base.</div>
+            </div>
+
+            <button class="btn btn-dark" disabled>Save</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card shadow-sm">
+          <div class="card-body p-4">
+            <div class="fw-bold mb-2">Security</div>
+
+            <div class="d-flex justify-content-between align-items-start gap-3 border-bottom pb-3 mb-3">
+              <div>
+                <div class="fw-semibold">Require activation</div>
+                <div class="text-muted small">Users must activate via email before login.</div>
+              </div>
+              <span class="badge bg-success mt-1">Enabled</span>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-start gap-3">
+              <div>
+                <div class="fw-semibold">Cookie preferences</div>
+                <div class="text-muted small">Users manage cookies from their account.</div>
+              </div>
+              <a class="btn btn-outline-dark btn-sm" href="{{ url_for('cookies_settings') }}">View</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-muted small mt-3">
+      Demo only.
+    </div>
+
+  </main>
+</div>
+{% endblock %}

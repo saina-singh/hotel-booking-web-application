@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block head %}
+<title>Admin • Analytics</title>
+{% endblock %}
+
+{% block body %}
+<div class="admin-layout">
+
+  <aside class="admin-sidebar">
+    <div class="admin-brand">Admin Dashboard</div>
+    <nav class="admin-nav">
+      <a href="{{ url_for('admin_dashboard') }}" class="{% if endpoint == 'admin_dashboard' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-speedometer2"></i></div>
+        <div class="fw-semibold">Dashboard</div>
+      </a>
+      <a href="{{ url_for('admin_reservations') }}" class="{% if endpoint == 'admin_reservations' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-calendar-check"></i></div>
+        <div class="fw-semibold">Reservations</div>
+      </a>
+      <a href="{{ url_for('admin_rooms') }}" class="{% if endpoint == 'admin_rooms' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-door-open"></i></div>
+        <div class="fw-semibold">Rooms</div>
+      </a>
+      <a href="{{ url_for('admin_staffs') }}" class="{% if endpoint == 'admin_staffs' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-people"></i></div>
+        <div class="fw-semibold">Staffs</div>
+      </a>
+      <a href="{{ url_for('admin_analytics') }}" class="{% if endpoint == 'admin_analytics' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-bar-chart"></i></div>
+        <div class="fw-semibold">Analytics</div>
+      </a>
+      <a href="{{ url_for('admin_reports') }}" class="{% if endpoint == 'admin_reports' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-file-earmark-text"></i></div>
+        <div class="fw-semibold">Reports</div>
+      </a>
+      <a href="{{ url_for('admin_settings') }}" class="{% if endpoint == 'admin_settings' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-gear"></i></div>
+        <div class="fw-semibold">Settings</div>
+      </a>
+      <a href="{{ url_for('admin_users') }}" class="{% if endpoint == 'admin_users' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-person-badge"></i></div>
+        <div class="fw-semibold">Users</div>
+      </a>
+
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+    {% include "admin/_admin_topbar.html" with context %}
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+      <div>
+        <h3 class="fw-bold mb-1">Analytics</h3>
+        <div class="text-muted">Quick insights into platform performance.</div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <select class="form-select" style="max-width: 180px;">
+          <option>This week</option>
+          <option>This month</option>
+          <option>This year</option>
+        </select>
+        <button class="btn btn-outline-dark"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-md-3">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="text-muted small">Revenue</div>
+            <div class="fw-bold fs-4">£{{ revenue_gbp|default("0.00") }}</div>
+            <div class="text-muted small">Based on confirmed bookings</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="text-muted small">Bookings</div>
+            <div class="fw-bold fs-4">{{ bookings_count|default(0) }}</div>
+            <div class="text-muted small">Total bookings</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="text-muted small">Active Users</div>
+            <div class="fw-bold fs-4">{{ active_users|default(0) }}</div>
+            <div class="text-muted small">Customers + Admins</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <div class="text-muted small">Cancellations</div>
+            <div class="fw-bold fs-4">{{ cancellations|default(0) }}</div>
+            <div class="text-muted small">Cancelled bookings</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-lg-7">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-white fw-semibold">Bookings trend</div>
+          <div class="card-body">
+            <div class="text-muted small mb-2">Chart placeholder (optional upgrade later)</div>
+            <div class="border rounded-4 d-flex align-items-center justify-content-center" style="height:260px;">
+              <div class="text-muted">Line chart goes here</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-5">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-white fw-semibold">Top cities</div>
+          <div class="card-body">
+            {% if top_cities and top_cities|length > 0 %}
+            {% for c in top_cities %}
+            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+              <div class="fw-semibold">{{ c.city }}</div>
+              <span class="badge bg-dark">{{ c.count }}</span>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="text-muted">No analytics data yet.</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+{% endblock %}

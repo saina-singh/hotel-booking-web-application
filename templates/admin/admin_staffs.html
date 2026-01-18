@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block head %}
+<title>Admin • Staffs</title>
+{% endblock %}
+
+{% block body %}
+<div class="admin-layout">
+
+  <aside class="admin-sidebar">
+    <div class="admin-brand">Admin Dashboard</div>
+    <nav class="admin-nav">
+      <a href="{{ url_for('admin_dashboard') }}" class="{% if endpoint == 'admin_dashboard' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-speedometer2"></i></div>
+        <div class="fw-semibold">Dashboard</div>
+      </a>
+      <a href="{{ url_for('admin_reservations') }}" class="{% if endpoint == 'admin_reservations' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-calendar-check"></i></div>
+        <div class="fw-semibold">Reservations</div>
+      </a>
+      <a href="{{ url_for('admin_rooms') }}" class="{% if endpoint == 'admin_rooms' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-door-open"></i></div>
+        <div class="fw-semibold">Rooms</div>
+      </a>
+      <a href="{{ url_for('admin_staffs') }}" class="{% if endpoint == 'admin_staffs' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-people"></i></div>
+        <div class="fw-semibold">Staffs</div>
+      </a>
+      <a href="{{ url_for('admin_analytics') }}" class="{% if endpoint == 'admin_analytics' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-bar-chart"></i></div>
+        <div class="fw-semibold">Analytics</div>
+      </a>
+      <a href="{{ url_for('admin_reports') }}" class="{% if endpoint == 'admin_reports' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-file-earmark-text"></i></div>
+        <div class="fw-semibold">Reports</div>
+      </a>
+      <a href="{{ url_for('admin_settings') }}" class="{% if endpoint == 'admin_settings' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-gear"></i></div>
+        <div class="fw-semibold">Settings</div>
+      </a>
+      <a href="{{ url_for('admin_users') }}" class="{% if endpoint == 'admin_users' %}active{% endif %}">
+        <div class="admin-icon"><i class="bi bi-person-badge"></i></div>
+        <div class="fw-semibold">Users</div>
+      </a>
+    </nav>
+  </aside>
+
+  <main class="admin-main">
+    {% include "admin/_admin_topbar.html" with context %}
+
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+      <div>
+        <h3 class="fw-bold mb-1">Staffs</h3>
+        <div class="text-muted">Admin accounts and staff access.</div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-3">Staff</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th class="text-end pe-3">User ID</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if staffs and staffs|length > 0 %}
+              {% for s in staffs %}
+              <tr>
+                <td class="ps-3">
+                  <div class="fw-semibold">{{ s.first_name }} {{ s.last_name }}</div>
+                  <div class="text-muted small">Admin / staff access</div>
+                </td>
+                <td>{{ s.email }}</td>
+                <td><span class="badge bg-dark">{{ s.role }}</span></td>
+                <td>
+                  {% if s.is_active == 1 %}
+                  <span class="badge bg-success">Active</span>
+                  {% else %}
+                  <span class="badge bg-secondary">Inactive</span>
+                  {% endif %}
+                </td>
+                <td class="text-end pe-3 text-muted">{{ s.user_id }}</td>
+              </tr>
+              {% endfor %}
+              {% else %}
+              <tr>
+                <td colspan="5" class="p-4 text-center">
+                  <div class="text-muted">No staff accounts found.</div>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+{% endblock %}

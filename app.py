@@ -255,9 +255,7 @@ def login():
             session['email'] = user['email']
             session['role'] = user['role']
             session['profile_image'] = user.get('profile_image')
-
             save_cookie_prefs(session["user_id"], 0, 0)
-            
             flash("Logged in successfully!", "success")
 
             return redirect(url_for('admin_dashboard' if user['role']=='ADMIN' else 'user_dashboard'))
@@ -1101,6 +1099,295 @@ def receipt_download(booking_id):
     if not session.get("loggedin"):
         return redirect(url_for("login"))
     return render_template("receipt_download.html", booking_id=booking_id)
-    
+
+def admin_only():
+    return session.get("loggedin") and session.get("role") == "ADMIN"
+
+@app.route("/admin/users")
+def admin_users():
+    if not (session.get("loggedin") and session.get("role") == "ADMIN"):
+        return redirect(url_for("login"))
+
+    q = (request.args.get("q") or "").strip()
+    like = f"%{q}%"
+
+    cursor = db.cursor(dictionary=True)
+
+    if q:
+        cursor.execute("""
+            SELECT user_id, first_name, last_name, email, role, is_active
+            FROM users
+            WHERE first_name LIKE %s OR last_name LIKE %s OR email LIKE %s
+            ORDER BY user_id DESC
+            LIMIT 200
+        """, (like, like, like))
+    else:
+        cursor.execute("""
+            SELECT user_id, first_name, last_name, email, role, is_active
+            FROM users
+            ORDER BY user_id DESC
+            LIMIT 200
+        """)
+    users = cursor.fetchall()
+
+    cursor.execute("SELECT COUNT(*) AS n FROM users")
+    total_users = cursor.fetchone()["n"]
+
+    cursor.close()
+
+    return render_template("admin/admin_users.html", users=users, total_users=total_users)
+
+@app.route("/admin/users/add", methods=["POST"])
+def admin_users_add():
+    if not (session.get("loggedin") and session.get("role") == "ADMIN"):
+        return redirect(url_for("login"))
+
+    first_name = (request.form.get("first_name") or "").strip()
+    last_name  = (request.form.get("last_name") or "").strip()
+    email      = (request.form.get("email") or "").strip()
+    password   = (request.form.get("password") or "")
+    role       = (request.form.get("role") or "CUSTOMER").strip().upper()
+
+    if role not in ("CUSTOMER", "ADMIN"):
+        role = "CUSTOMER"
+
+    if not first_name or not last_name or not email or len(password) < 8:
+        flash("Please fill all fields (password min 8 chars).", "danger")
+        return redirect(url_for("admin_users"))
+
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT user_id FROM users WHERE email=%s", (email,))
+    if cursor.fetchone():
+        cursor.close()
+        flash("That email already exists.", "warning")
+        return redirect(url_for("admin_users"))
+
+    hashed = generate_password_hash(password, method="pbkdf2:sha256")
+
+    cursor2 = db.cursor()
+    cursor2.execute("""
+        INSERT INTO users (role, first_name, last_name, email, password_hash, is_active)
+        VALUES (%s, %s, %s, %s, %s, 1)
+    """, (role, first_name, last_name, email, hashed))
+    db.commit()
+    cursor2.close()
+    cursor.close()
+
+    flash("User created successfully.", "success")
+    return redirect(url_for("admin_users"))
+
+@app.route("/admin/users/<int:user_id>/toggle", methods=["POST"])
+def admin_users_toggle(user_id):
+    if not (session.get("loggedin") and session.get("role") == "ADMIN"):
+        return redirect(url_for("login"))
+
+    # Prevent admin from deactivating themselves
+    if user_id == session.get("user_id"):
+        flash("You cannot deactivate your own account.", "warning")
+        return redirect(url_for("admin_users"))
+
+    action = (request.form.get("action") or "").lower()
+    new_value = 1 if action == "activate" else 0
+
+    cursor = db.cursor()
+    cursor.execute("UPDATE users SET is_active=%s WHERE user_id=%s", (new_value, user_id))
+    db.commit()
+    cursor.close()
+
+    flash("User status updated.", "success")
+    return redirect(url_for("admin_users"))
+
+@app.route("/admin/users/<int:user_id>/delete", methods=["POST"])
+def admin_users_delete(user_id):
+    if not (session.get("loggedin") and session.get("role") == "ADMIN"):
+        return redirect(url_for("login"))
+
+    if user_id == session.get("user_id"):
+        flash("You cannot delete your own account.", "warning")
+        return redirect(url_for("admin_users"))
+
+    try:
+        cursor = db.cursor()
+        cursor.execute("DELETE FROM users WHERE user_id=%s", (user_id,))
+        db.commit()
+        cursor.close()
+        flash("User deleted.", "success")
+    except Exception as e:
+        # Usually fails if the user has bookings
+        flash(f"Cannot delete this user (they may have bookings). Deactivate instead. ({e})", "warning")
+
+    return redirect(url_for("admin_users"))
+
+@app.route('/admin/staffs')
+def admin_staffs():
+    if not (session.get('loggedin') and session.get('role') == 'ADMIN'):
+        return redirect(url_for('login'))
+
+    q = (request.args.get("q") or "").strip()
+    like = f"%{q}%"
+    cursor = db.cursor(dictionary=True)
+
+    if q:
+        cursor.execute("""
+          SELECT user_id, first_name, last_name, email, role, is_active
+          FROM users
+          WHERE role='ADMIN' AND (first_name LIKE %s OR last_name LIKE %s OR email LIKE %s)
+          ORDER BY user_id DESC
+        """, (like, like, like))
+    else:
+        cursor.execute("""
+          SELECT user_id, first_name, last_name, email, role, is_active
+          FROM users
+          WHERE role='ADMIN'
+          ORDER BY user_id DESC
+        """)
+    staffs = cursor.fetchall()
+    cursor.close()
+
+    return render_template("admin/admin_staffs.html", staffs=staffs)
+
+
+@app.route('/admin/rooms')
+def admin_rooms():
+    if not (session.get('loggedin') and session.get('role') == 'ADMIN'):
+        return redirect(url_for('login'))
+
+    q = (request.args.get("q") or "").strip().upper()
+    cursor = db.cursor(dictionary=True)
+
+    if q:
+        cursor.execute("""
+          SELECT room_type_id, code, max_guests, base_multiplier, second_guest_multiplier
+          FROM room_types
+          WHERE code LIKE %s
+          ORDER BY room_type_id
+        """, (f"%{q}%",))
+    else:
+        cursor.execute("""
+          SELECT room_type_id, code, max_guests, base_multiplier, second_guest_multiplier
+          FROM room_types
+          ORDER BY room_type_id
+        """)
+    room_types = cursor.fetchall()
+
+    cursor.execute("SELECT COUNT(*) AS n FROM room_types")
+    room_types_count = cursor.fetchone()["n"]
+
+    cursor.execute("SELECT COALESCE(MAX(max_guests),0) AS m FROM room_types")
+    max_guests_supported = cursor.fetchone()["m"]
+
+    cursor.execute("SELECT COUNT(*) AS n FROM hotel_room_inventory")
+    inventory_rows = cursor.fetchone()["n"]
+
+    cursor.close()
+
+    return render_template("admin/admin_rooms.html",
+                           room_types=room_types,
+                           room_types_count=room_types_count,
+                           max_guests_supported=max_guests_supported,
+                           inventory_rows=inventory_rows)
+
+@app.route('/admin/reservations')
+def admin_reservations():
+    if not (session.get('loggedin') and session.get('role') == 'ADMIN'):
+        return redirect(url_for('login'))
+
+    q = (request.args.get("q") or "").strip()
+    like = f"%{q}%"
+
+    cursor = db.cursor(dictionary=True)
+
+    base_sql = """
+      SELECT b.booking_id, b.booking_code, b.booking_status, b.created_at,
+             b.check_in, b.check_out, b.total_gbp,
+             u.first_name, u.last_name, u.email,
+             h.hotel_name, c.name AS city
+      FROM bookings b
+      JOIN users u ON u.user_id=b.user_id
+      JOIN hotels h ON h.hotel_id=b.hotel_id
+      JOIN cities c ON c.city_id=h.city_id
+    """
+    params = []
+    if q:
+        base_sql += """
+          WHERE b.booking_code LIKE %s
+             OR u.email LIKE %s
+             OR c.name LIKE %s
+        """
+        params = [like, like, like]
+
+    base_sql += " ORDER BY b.created_at DESC LIMIT 200"
+    cursor.execute(base_sql, params)
+    bookings = cursor.fetchall()
+
+    # counts
+    cursor.execute("SELECT COUNT(*) AS n FROM bookings")
+    total_bookings = cursor.fetchone()["n"]
+    cursor.execute("SELECT COUNT(*) AS n FROM bookings WHERE booking_status='CONFIRMED'")
+    confirmed_bookings = cursor.fetchone()["n"]
+    cursor.execute("SELECT COUNT(*) AS n FROM bookings WHERE booking_status='CANCELLED'")
+    cancelled_bookings = cursor.fetchone()["n"]
+
+    cursor.close()
+
+    return render_template("admin/admin_reservations.html",
+                           bookings=bookings,
+                           total_bookings=total_bookings,
+                           confirmed_bookings=confirmed_bookings,
+                           cancelled_bookings=cancelled_bookings)
+
+@app.route('/admin/analytics')
+def admin_analytics():
+    if not (session.get('loggedin') and session.get('role') == 'ADMIN'):
+        return redirect(url_for('login'))
+
+    cursor = db.cursor(dictionary=True)
+
+    cursor.execute("SELECT COALESCE(SUM(total_gbp),0) AS revenue FROM bookings WHERE booking_status='CONFIRMED'")
+    revenue_gbp = cursor.fetchone()["revenue"]
+
+    cursor.execute("SELECT COUNT(*) AS n FROM bookings")
+    bookings_count = cursor.fetchone()["n"]
+
+    cursor.execute("SELECT COUNT(*) AS n FROM users WHERE is_active=1")
+    active_users = cursor.fetchone()["n"]
+
+    cursor.execute("SELECT COUNT(*) AS n FROM bookings WHERE booking_status='CANCELLED'")
+    cancellations = cursor.fetchone()["n"]
+
+    cursor.execute("""
+      SELECT c.name AS city, COUNT(*) AS count
+      FROM bookings b
+      JOIN hotels h ON h.hotel_id=b.hotel_id
+      JOIN cities c ON c.city_id=h.city_id
+      WHERE b.booking_status='CONFIRMED'
+      GROUP BY c.name
+      ORDER BY count DESC
+      LIMIT 6
+    """)
+    top_cities = cursor.fetchall()
+
+    cursor.close()
+
+    return render_template("admin/admin_analytics.html",
+                           revenue_gbp=revenue_gbp,
+                           bookings_count=bookings_count,
+                           active_users=active_users,
+                           cancellations=cancellations,
+                           top_cities=top_cities)
+
+
+@app.route('/admin/reports')
+def admin_reports():
+    if not (session.get('loggedin') and session.get('role') == 'ADMIN'):
+        return redirect(url_for('login'))
+    return render_template("admin/admin_reports.html")
+
+@app.route('/admin/settings')
+def admin_settings():
+    if not (session.get('loggedin') and session.get('role') == 'ADMIN'):
+        return redirect(url_for('login'))
+    return render_template("admin/admin_settings.html")
+
 if __name__== '__main__':
     app.run(host="127.0.0.1", port=5000, debug=True)

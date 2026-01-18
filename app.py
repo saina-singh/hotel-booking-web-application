@@ -35,6 +35,84 @@ db=mysql.connector.connect(
     port=3306
 )
 
+def get_cookie_prefs(user_id):
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT necessary, analytics, marketing
+        FROM cookie_preferences
+        WHERE user_id=%s
+        LIMIT 1
+    """, (user_id,))
+    prefs = cursor.fetchone()
+    cursor.close()
+
+    # default if no record yet
+    if not prefs:
+        return {"necessary": 1, "analytics": 0, "marketing": 0}
+
+    # ensure ints
+    return {
+        "necessary": int(prefs.get("necessary", 1)),
+        "analytics": int(prefs.get("analytics", 0)),
+        "marketing": int(prefs.get("marketing", 0))
+    }
+
+def save_cookie_prefs(user_id, analytics, marketing):
+    cursor = db.cursor()
+    cursor.execute("""
+        INSERT INTO cookie_preferences (user_id, necessary, analytics, marketing)
+        VALUES (%s, 1, %s, %s)
+        ON DUPLICATE KEY UPDATE
+          necessary=1,
+          analytics=VALUES(analytics),
+          marketing=VALUES(marketing)
+    """, (user_id, int(analytics), int(marketing)))
+    db.commit()
+    cursor.close()
+
+@app.route("/cookies", methods=["GET", "POST"])
+def cookies_settings():
+    if not session.get("loggedin"):
+        return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+
+    if request.method == "POST":
+        # necessary is always ON, cannot be disabled
+        analytics = 1 if request.form.get("analytics") == "1" else 0
+        marketing = 1 if request.form.get("marketing") == "1" else 0
+
+        save_cookie_prefs(user_id, analytics, marketing)
+        flash("Cookie settings saved.", "success")
+        return redirect(url_for("cookies_settings"))
+
+    prefs = get_cookie_prefs(user_id)
+    return render_template("cookies_settings.html", prefs=prefs)
+
+@app.route("/cookies/quick", methods=["POST"])
+def cookies_quick():
+    if not session.get("loggedin"):
+        return jsonify({"ok": False}), 401
+
+    data = request.get_json(silent=True) or {}
+    action = (data.get("action") or "").lower()
+
+    if action == "accept_all":
+        save_cookie_prefs(session["user_id"], 1, 1)
+    elif action == "reject_optional":
+        save_cookie_prefs(session["user_id"], 0, 0)
+    else:
+        return jsonify({"ok": False, "error": "invalid_action"}), 400
+
+    return jsonify({"ok": True})
+
+def has_cookie_record(user_id):
+    cursor = db.cursor()
+    cursor.execute("SELECT 1 FROM cookie_preferences WHERE user_id=%s LIMIT 1", (user_id,))
+    row = cursor.fetchone()
+    cursor.close()
+    return bool(row)
+
 @app.after_request
 def disable_cache(response):
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
@@ -53,7 +131,10 @@ mail=Mail(app)
 
 @app.context_processor
 def inject_endpoint():
-    return dict(endpoint=request.endpoint)
+    show_cookie_banner = False
+    if session.get("loggedin"):
+        show_cookie_banner = not has_cookie_record(session["user_id"])
+    return dict(endpoint=request.endpoint, show_cookie_banner=show_cookie_banner)
 
 #default route
 @app.route('/')
@@ -175,6 +256,8 @@ def login():
             session['role'] = user['role']
             session['profile_image'] = user.get('profile_image')
 
+            save_cookie_prefs(session["user_id"], 0, 0)
+            
             flash("Logged in successfully!", "success")
 
             return redirect(url_for('admin_dashboard' if user['role']=='ADMIN' else 'user_dashboard'))

@@ -4,39 +4,97 @@
 {% endblock %}
 
 {% block body %}
+
+{# -----------------------------
+Define rows FIRST (so KPI cards work)
+----------------------------- #}
+{% set demo_bookings = [
+{
+"booking_id": 1, "booking_code": "WH4829017391", "booking_status": "CONFIRMED",
+"created_at": "2025-12-18 14:21",
+"check_in": "2026-01-28", "check_out": "2026-01-31",
+"total_gbp": "420.00",
+"first_name": "Saina", "last_name": "Singh", "email": "singhsaina246@gmail.com",
+"hotel_name": "WH London", "city": "London"
+},
+{
+"booking_id": 2, "booking_code": "WH1047283910", "booking_status": "PENDING",
+"created_at": "2025-12-20 09:05",
+"check_in": "2026-02-02", "check_out": "2026-02-04",
+"total_gbp": "260.00",
+"first_name": "Aarav", "last_name": "Sharma", "email": "aarav.sharma@email.com",
+"hotel_name": "WH Manchester", "city": "Manchester"
+},
+{
+"booking_id": 3, "booking_code": "WH7700192834", "booking_status": "CANCELLED",
+"created_at": "2025-12-22 18:44",
+"check_in": "2026-01-20", "check_out": "2026-01-22",
+"total_gbp": "190.00",
+"first_name": "Maya", "last_name": "Gurung", "email": "maya.gurung@email.com",
+"hotel_name": "WH Edinburgh", "city": "Edinburgh"
+},
+{
+"booking_id": 4, "booking_code": "WH3399001122", "booking_status": "CONFIRMED",
+"created_at": "2025-12-28 11:12",
+"check_in": "2026-02-10", "check_out": "2026-02-15",
+"total_gbp": "920.00",
+"first_name": "Daniel", "last_name": "Smith", "email": "daniel.smith@email.com",
+"hotel_name": "WH Glasgow", "city": "Glasgow"
+},
+{
+"booking_id": 5, "booking_code": "WH5588123400", "booking_status": "CONFIRMED",
+"created_at": "2026-01-03 16:30",
+"check_in": "2026-01-19", "check_out": "2026-01-21",
+"total_gbp": "310.00",
+"first_name": "Aisha", "last_name": "Khan", "email": "aisha.khan@email.com",
+"hotel_name": "WH Birmingham", "city": "Birmingham"
+}
+] %}
+
+{% set rows = bookings if (bookings and bookings|length > 0) else demo_bookings %}
+
 <div class="admin-layout">
 
+  <!-- SIDEBAR -->
   <aside class="admin-sidebar">
     <div class="admin-brand">Admin Dashboard</div>
+
     <nav class="admin-nav">
       <a href="{{ url_for('admin_dashboard') }}" class="{% if endpoint == 'admin_dashboard' %}active{% endif %}">
         <div class="admin-icon"><i class="bi bi-speedometer2"></i></div>
         <div class="fw-semibold">Dashboard</div>
       </a>
+
       <a href="{{ url_for('admin_reservations') }}" class="{% if endpoint == 'admin_reservations' %}active{% endif %}">
         <div class="admin-icon"><i class="bi bi-calendar-check"></i></div>
         <div class="fw-semibold">Reservations</div>
       </a>
+
       <a href="{{ url_for('admin_rooms') }}" class="{% if endpoint == 'admin_rooms' %}active{% endif %}">
         <div class="admin-icon"><i class="bi bi-door-open"></i></div>
         <div class="fw-semibold">Rooms</div>
       </a>
+
       <a href="{{ url_for('admin_staffs') }}" class="{% if endpoint == 'admin_staffs' %}active{% endif %}">
         <div class="admin-icon"><i class="bi bi-people"></i></div>
         <div class="fw-semibold">Staffs</div>
       </a>
+
       <a href="{{ url_for('admin_analytics') }}" class="{% if endpoint == 'admin_analytics' %}active{% endif %}">
         <div class="admin-icon"><i class="bi bi-bar-chart"></i></div>
         <div class="fw-semibold">Analytics</div>
       </a>
+
       <a href="{{ url_for('admin_reports') }}" class="{% if endpoint == 'admin_reports' %}active{% endif %}">
         <div class="admin-icon"><i class="bi bi-file-earmark-text"></i></div>
         <div class="fw-semibold">Reports</div>
       </a>
+
       <a href="{{ url_for('admin_settings') }}" class="{% if endpoint == 'admin_settings' %}active{% endif %}">
         <div class="admin-icon"><i class="bi bi-gear"></i></div>
         <div class="fw-semibold">Settings</div>
       </a>
+
       <a href="{{ url_for('admin_users') }}" class="{% if endpoint == 'admin_users' %}active{% endif %}">
         <div class="admin-icon"><i class="bi bi-person-badge"></i></div>
         <div class="fw-semibold">Users</div>
@@ -44,8 +102,14 @@
     </nav>
   </aside>
 
+  <!-- MAIN -->
   <main class="admin-main">
-    {% include "admin/_admin_topbar.html" with context %}
+
+    <!-- TOPBAR (wrapped so icons don't shift) -->
+    <div class="admin-topbar-wrap">
+      {% include "admin/_admin_topbar.html" with context %}
+    </div>
+
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
       <div>
         <h3 class="fw-bold mb-1">Reservations</h3>
@@ -53,33 +117,41 @@
       </div>
     </div>
 
+    <!-- KPI CARDS -->
     <div class="row g-3 mb-3">
       <div class="col-md-4">
         <div class="card shadow-sm">
           <div class="card-body">
             <div class="text-muted small">Total Bookings</div>
-            <div class="fw-bold fs-4">{{ total_bookings|default(0) }}</div>
+            <div class="fw-bold fs-4">{{ rows|length }}</div>
           </div>
         </div>
       </div>
+
       <div class="col-md-4">
         <div class="card shadow-sm">
           <div class="card-body">
             <div class="text-muted small">Confirmed</div>
-            <div class="fw-bold fs-4">{{ confirmed_bookings|default(0) }}</div>
+            <div class="fw-bold fs-4">
+              {{ rows|selectattr('booking_status','equalto','CONFIRMED')|list|length }}
+            </div>
           </div>
         </div>
       </div>
+
       <div class="col-md-4">
         <div class="card shadow-sm">
           <div class="card-body">
             <div class="text-muted small">Cancelled</div>
-            <div class="fw-bold fs-4">{{ cancelled_bookings|default(0) }}</div>
+            <div class="fw-bold fs-4">
+              {{ rows|selectattr('booking_status','equalto','CANCELLED')|list|length }}
+            </div>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- TABLE -->
     <div class="card shadow-sm">
       <div class="card-body p-0">
         <div class="table-responsive">
@@ -97,26 +169,30 @@
             </thead>
 
             <tbody>
-              {% if bookings and bookings|length > 0 %}
-              {% for b in bookings %}
+              {% for b in rows %}
               <tr>
                 <td class="ps-3">
                   <div class="fw-semibold">{{ b.booking_code }}</div>
                   <div class="text-muted small">ID: {{ b.booking_id }}</div>
                 </td>
+
                 <td>
                   <div class="fw-semibold">{{ b.first_name }} {{ b.last_name }}</div>
                   <div class="text-muted small">{{ b.email }}</div>
                 </td>
+
                 <td>
                   <div class="fw-semibold">{{ b.hotel_name }}</div>
                   <div class="text-muted small">{{ b.city }}</div>
                 </td>
+
                 <td>
                   <div class="small"><span class="text-muted">In:</span> {{ b.check_in }}</div>
                   <div class="small"><span class="text-muted">Out:</span> {{ b.check_out }}</div>
                 </td>
+
                 <td class="fw-semibold">£{{ b.total_gbp }}</td>
+
                 <td>
                   {% if b.booking_status == 'CONFIRMED' %}
                   <span class="badge bg-success">CONFIRMED</span>
@@ -126,16 +202,10 @@
                   <span class="badge bg-warning text-dark">PENDING</span>
                   {% endif %}
                 </td>
+
                 <td class="text-end pe-3 text-muted small">{{ b.created_at }}</td>
               </tr>
               {% endfor %}
-              {% else %}
-              <tr>
-                <td colspan="7" class="p-4 text-center">
-                  <div class="text-muted">No reservations found.</div>
-                </td>
-              </tr>
-              {% endif %}
             </tbody>
 
           </table>

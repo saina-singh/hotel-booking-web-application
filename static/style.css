@@ -811,3 +811,159 @@ html {
   color: rgba(0, 0, 0, .55);
   font-size: 14px;
 }
+
+/* =========================
+   ADMIN LAYOUT (GLOBAL)
+========================= */
+
+.admin-layout {
+  display: flex;
+  gap: 22px;
+  padding: 28px 18px;
+  align-items: flex-start;
+}
+
+.admin-sidebar {
+  width: 280px;
+  background: #5b5b5b;
+  color: #fff;
+  border-radius: 26px;
+  padding: 26px 18px;
+  position: sticky;
+  top: 18px;
+  height: calc(100vh - 36px);
+  overflow: auto;
+}
+
+.admin-brand {
+  font-size: 28px;
+  font-weight: 800;
+  padding: 10px 12px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 16px;
+}
+
+.admin-nav a {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 14px;
+  border-radius: 18px;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.92);
+  margin-bottom: 10px;
+  transition: 0.15s ease;
+}
+
+.admin-nav a:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.admin-nav a.active {
+  background: rgba(255, 255, 255, 0.18);
+  outline: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.admin-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.admin-icon i {
+  font-size: 22px;
+}
+
+.admin-main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* =========================
+   TOPBAR FIX (NO JUMPING)
+   - Stops icon buttons shifting left/right
+========================= */
+
+.admin-topbar-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: #fff;
+  padding: 12px 0;
+}
+
+/* If your _admin_topbar.html has a wrapper class, apply these:
+   Add class="admin-topbar" to its main container for best result */
+.admin-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: nowrap;
+  /* CRITICAL: prevents shifting */
+}
+
+.admin-topbar-left {
+  min-width: 260px;
+}
+
+.admin-topbar-search {
+  flex: 1;
+  max-width: 520px;
+  min-width: 260px;
+}
+
+.admin-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+  /* CRITICAL */
+  flex: 0 0 auto;
+}
+
+/* Stable icon buttons */
+.admin-topbar-right .icon-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: #fff;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 992px) {
+  .admin-layout {
+    flex-direction: column;
+    padding: 18px 12px;
+  }
+
+  .admin-sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    top: auto;
+  }
+
+  .admin-topbar {
+    flex-wrap: wrap;
+    /* OK on mobile */
+  }
+
+  .admin-topbar-search {
+    max-width: 100%;
+    min-width: 100%;
+  }
+}

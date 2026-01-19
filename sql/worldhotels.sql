@@ -869,6 +869,20 @@ NULL AFTER provider;
 DESCRIBE payments;
 SHOW COLUMNS FROM payments LIKE 'payment_method';
 
+CREATE TABLE cookie_preferences (
+  user_id   BIGINT NOT NULL,
+  necessary BOOLEAN NOT NULL DEFAULT TRUE,
+  analytics BOOLEAN NOT NULL DEFAULT FALSE,
+  marketing BOOLEAN NOT NULL DEFAULT FALSE,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (user_id),
+  CONSTRAINT fk_cookie_user
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+    ON DELETE CASCADE
+);
+
+SHOW TABLES LIKE 'cookie_preferences';
+DESCRIBE cookie_preferences;
 
 
 

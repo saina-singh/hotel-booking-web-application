@@ -1,36 +1,149 @@
 {% extends 'base.html' %}
+
 {% block head %}
 <title>Privacy Policy • World Hotels</title>
 {% endblock %}
 
 {% block body %}
-<div class="container my-5" style="max-width: 900px;">
-  <h2 class="fw-bold mb-3">Privacy Policy</h2>
-  <p class="text-muted">
-    We respect your privacy. This policy explains how World Hotels collects and uses your data.
-  </p>
 
-  <div class="card shadow-sm">
-    <div class="card-body p-4">
-      <h5 class="fw-bold">What we collect</h5>
-      <ul class="text-muted">
-        <li>Name and email (for account and support)</li>
-        <li>Booking details (to manage reservations)</li>
-        <li>Basic site usage (to improve experience)</li>
-      </ul>
+<div class="container my-5" style="max-width: 1000px;">
 
-      <h5 class="fw-bold mt-4">How we use it</h5>
-      <ul class="text-muted">
-        <li>To provide bookings and customer support</li>
-        <li>To keep your account secure</li>
-        <li>To improve website performance</li>
-      </ul>
+  <!-- ===== Page Header ===== -->
+  <div class="text-center mb-5">
+    <span class="badge bg-dark mb-2">
+      <i class="bi bi-shield-lock me-1"></i> Your Privacy Matters
+    </span>
+    <h2 class="fw-bold mt-2">Privacy Policy</h2>
+    <p class="text-muted mt-2">
+      This policy explains how World Hotels collects, uses, and protects your personal information.
+    </p>
+  </div>
 
-      <h5 class="fw-bold mt-4">We do not sell your data</h5>
-      <p class="text-muted mb-0">
-        We never sell your personal information to third parties.
-      </p>
+  <!-- ===== Intro Card ===== -->
+  <div class="card shadow-sm rounded-4 mb-4">
+    <div class="card-body p-4 p-md-5">
+      <div class="d-flex align-items-start gap-3">
+        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center"
+          style="width:46px;height:46px;">
+          <i class="bi bi-info-circle fs-5"></i>
+        </div>
+        <div>
+          <h5 class="fw-bold mb-1">Our Commitment</h5>
+          <p class="text-muted mb-0">
+            At World Hotels, we are committed to protecting your privacy and ensuring transparency
+            in how your data is collected and used.
+          </p>
+        </div>
+      </div>
     </div>
   </div>
+
+  <!-- ===== Main Sections ===== -->
+  <div class="row g-4">
+
+    <!-- What we collect -->
+    <div class="col-md-6">
+      <div class="card shadow-sm rounded-4 h-100">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-database fs-4"></i>
+            <h5 class="fw-bold mb-0">Information We Collect</h5>
+          </div>
+
+          <ul class="text-muted mb-0">
+            <li class="mb-2">Name, email address, and profile details</li>
+            <li class="mb-2">Booking information (dates, hotels, rooms)</li>
+            <li class="mb-2">Payment method (no card details stored)</li>
+            <li class="mb-2">Basic site usage for performance improvements</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- How we use it -->
+    <div class="col-md-6">
+      <div class="card shadow-sm rounded-4 h-100">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-gear fs-4"></i>
+            <h5 class="fw-bold mb-0">How We Use Your Data</h5>
+          </div>
+
+          <ul class="text-muted mb-0">
+            <li class="mb-2">To manage hotel bookings and reservations</li>
+            <li class="mb-2">To provide customer support and assistance</li>
+            <li class="mb-2">To maintain account security</li>
+            <li class="mb-2">To improve website functionality and experience</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data protection -->
+    <div class="col-md-6">
+      <div class="card shadow-sm rounded-4 h-100">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-lock fs-4"></i>
+            <h5 class="fw-bold mb-0">Data Protection & Security</h5>
+          </div>
+
+          <p class="text-muted mb-2">
+            We use industry-standard security measures to protect your data.
+          </p>
+
+          <ul class="text-muted mb-0">
+            <li class="mb-2">Encrypted data storage</li>
+            <li class="mb-2">Secure authentication sessions</li>
+            <li class="mb-2">Restricted internal access</li>
+            <li class="mb-2">Regular system monitoring</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- What we don’t do -->
+    <div class="col-md-6">
+      <div class="card shadow-sm rounded-4 h-100">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-x-circle fs-4"></i>
+            <h5 class="fw-bold mb-0">What We Do NOT Do</h5>
+          </div>
+
+          <ul class="text-muted mb-0">
+            <li class="mb-2">We do not sell your personal data</li>
+            <li class="mb-2">We do not share data with advertisers</li>
+            <li class="mb-2">We do not send spam or marketing emails</li>
+            <li class="mb-2">We do not store card or bank details</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== Footer Trust Section ===== -->
+  <div class="card shadow-sm rounded-4 mt-5">
+    <div class="card-body p-4 text-center">
+      <i class="bi bi-shield-check fs-2 mb-3"></i>
+      <h5 class="fw-bold">Your Trust Is Important to Us</h5>
+      <p class="text-muted mb-3">
+        World Hotels complies with applicable data protection laws, including GDPR.
+        You have the right to access, update, or delete your personal data.
+      </p>
+
+      <div class="d-flex justify-content-center gap-2 flex-wrap">
+        <a href="{{ url_for('contact') }}" class="btn btn-outline-dark">
+          <i class="bi bi-headset me-2"></i> Contact Support
+        </a>
+        <a href="{{ url_for('deals') }}" class="btn btn-dark">
+          <i class="bi bi-tags me-2"></i> View Deals
+        </a>
+      </div>
+    </div>
+  </div>
+
 </div>
+
 {% endblock %}

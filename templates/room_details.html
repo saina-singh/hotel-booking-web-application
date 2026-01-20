@@ -17,63 +17,82 @@
     <span class="fw-semibold">{{ room.code }}</span>
   </div>
 
-  <div class="row g-4">
+  <div class="row g-4 align-items-start">
 
     <!-- LEFT: Room info -->
     <div class="col-lg-8">
-      <div class="card shadow-sm overflow-hidden">
-        <img src="{{ url_for('static', filename=room.img) }}" class="w-100" style="height:360px; object-fit:cover;">
+      <div class="card shadow-sm rounded-4">
+
+        <!-- Image: overflow only here -->
+        <div class="rounded-top-4 overflow-hidden">
+          <img src="{{ url_for('static', filename=room.img) }}" class="w-100" style="height:360px; object-fit:cover;">
+        </div>
 
         <div class="card-body p-4">
+
           <h2 class="fw-bold mb-1">{{ room.code }}</h2>
           <div class="text-muted mb-3">{{ room.title }}</div>
-          <div class="card shadow-sm mb-4">
-            <div class="card-body p-3 p-md-4">
-              <form method="get" class="row g-3 align-items-end">
+
+          <!-- Season pricing controls -->
+          <div class="border rounded-4 p-3 p-md-4 bg-light mb-4">
+            <form method="GET" action="{{ url_for('room_details', hotel_id=hotel.hotel_id, room_code=room.code) }}">
+              <div class="row g-3 align-items-end">
+
                 <div class="col-md-4">
-                  <label class="form-label fw-semibold">Pricing season</label>
-                  <select name="season" class="form-select" onchange="this.form.submit()">
-                    <option value="" {% if not request.args.get('season') %}selected{% endif %}>Auto (from check-in)
-                    </option>
-                    <option value="peak" {% if request.args.get('season')=='peak' %}selected{% endif %}>Peak season
-                    </option>
-                    <option value="off_peak" {% if request.args.get('season')=='off_peak' %}selected{% endif %}>Off-peak
-                      season</option>
+                  <label class="form-label fw-semibold mb-1">Pricing season</label>
+                  <select class="form-select" name="season">
+                    <option value="" {% if not season_override %}selected{% endif %}>Auto (from check-in)</option>
+                    <option value="peak" {% if season_override=='peak' %}selected{% endif %}>Peak</option>
+                    <option value="off_peak" {% if season_override=='off_peak' %}selected{% endif %}>Off-Peak</option>
                   </select>
+                  <div class="text-muted small mt-1">Choose Peak/Off-Peak manually if needed.</div>
                 </div>
 
                 <div class="col-md-4">
-                  <label class="form-label fw-semibold">Check-in date (optional)</label>
-                  <input type="date" name="checkin" value="{{ checkin or '' }}" class="form-control">
+                  <label class="form-label fw-semibold mb-1">Check-in date (optional)</label>
+                  <input type="date" class="form-control" name="checkin" value="{{ checkin or '' }}">
+                  <div class="text-muted small mt-1">Used only when season is “Auto”.</div>
                 </div>
 
-                <div class="col-md-4 d-grid">
-                  <button class="btn btn-dark" type="submit">Update pricing</button>
+                <div class="col-md-4">
+                  <button class="btn btn-dark w-100" type="submit">
+                    <i class="bi bi-arrow-repeat me-2"></i> Update pricing
+                  </button>
                 </div>
-              </form>
-            </div>
+              </div>
+            </form>
           </div>
 
-          <div class="fw-bold fs-4 mb-2">
-            £{{ room.nightly_from_gbp }} / night
+          <!-- Price -->
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+            <div class="fw-bold fs-4">
+              £{{ room.nightly_from_gbp }} <span class="text-muted fs-6 fw-normal">/ night</span>
+            </div>
+
+            {% if season %}
+            <span class="badge bg-success">
+              <i class="bi bi-check2-circle me-1"></i> {{ season }} season pricing
+            </span>
+            {% endif %}
           </div>
 
           <div class="text-muted mb-3">
             Max guests: {{ room.max_guests }} • Available rooms: {{ room.rooms_count }}
           </div>
 
-          <p class="text-muted">{{ room.desc }}</p>
+          <!-- Description (this was “missing” because of layout/clipping) -->
+          <p class="text-muted mb-4">{{ room.desc }}</p>
 
           <hr>
 
           <h6 class="fw-bold">Why choose this room</h6>
-          <ul class="text-muted">
+          <ul class="text-muted mb-4">
             {% for x in room.why_list %}
             <li>{{ x }}</li>
             {% endfor %}
           </ul>
 
-          <h6 class="fw-bold mt-3">Included features</h6>
+          <h6 class="fw-bold">Included features</h6>
           {% if room.features_list %}
           <div class="d-flex flex-wrap gap-2">
             {% for f in room.features_list %}
@@ -83,13 +102,14 @@
           {% else %}
           <div class="text-muted">No features listed.</div>
           {% endif %}
+
         </div>
       </div>
     </div>
 
     <!-- RIGHT: Booking + payment -->
     <div class="col-lg-4">
-      <div class="card shadow-sm position-sticky" style="top:20px;">
+      <div class="card shadow-sm position-sticky rounded-4" style="top:20px;">
         <div class="card-body p-4">
 
           <h5 class="fw-bold mb-2">Book this room</h5>
@@ -143,7 +163,6 @@
         </div>
       </div>
     </div>
-
   </div>
 </div>
 

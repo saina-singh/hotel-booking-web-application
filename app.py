@@ -295,17 +295,23 @@ def user_dashboard():
     if not (session.get('loggedin') and session.get('role') == 'CUSTOMER'):
         return redirect(url_for('login'))
 
+    tab = (request.args.get("tab") or "all").lower().strip()  
+
     cursor = db.cursor(dictionary=True)
 
-    # current user info
     cursor.execute("""
         SELECT user_id, first_name, last_name, email
         FROM users
         WHERE user_id = %s
+        LIMIT 1
     """, (session['user_id'],))
     me = cursor.fetchone()
 
-    # bookings + converted total in selected currency (uses latest rate <= today)
+    if not me:
+        cursor.close()
+        session.clear()
+        return redirect(url_for("login"))
+
     cursor.execute("""
         SELECT
           b.booking_id,
@@ -338,17 +344,29 @@ def user_dashboard():
         WHERE b.user_id = %s
         ORDER BY b.created_at DESC
     """, (session['user_id'],))
-    bookings = cursor.fetchall()
+    all_bookings = cursor.fetchall() or []
 
     cursor.close()
 
-    # If rate is missing, fall back to GBP display in template safely
-    for b in bookings:
+    for b in all_bookings:
         if b.get("total_in_currency") is None:
-            b["total_in_currency"] = b["total_gbp"]
+            b["total_in_currency"] = b.get("total_gbp", 0)
             b["gbp_to_curr"] = 1.0
 
-    return render_template('user/user_dashboard.html', me=me, bookings=bookings)
+    if tab == "cancelled":
+        bookings = [b for b in all_bookings if b.get("booking_status") == "CANCELLED"]
+    elif tab == "active":
+        bookings = [b for b in all_bookings if b.get("booking_status") != "CANCELLED"]
+    else:
+        bookings = all_bookings
+
+    return render_template(
+        'user/user_dashboard.html',
+        me=me,
+        bookings=bookings,              
+        all_bookings=all_bookings,     
+        tab=tab
+    )
 
 @app.route('/logout')
 def logout():
@@ -692,7 +710,8 @@ def room_details(hotel_id, room_code):
         hotel=hotel,
         room=room,
         checkin=checkin_str,                
-        season=("Peak" if peak else "Off-Peak"), 
+        season=("Peak" if peak else "Off-Peak"),
+        season_override=season_override
     )
 
 @app.route('/book/<int:hotel_id>', methods=['POST'])

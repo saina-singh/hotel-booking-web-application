@@ -3,150 +3,367 @@
 
 <div class="container my-4 pt-4">
 
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-      <h2 class="fw-bold mb-0">User Dashboard</h2>
-      <div class="text-muted">
-        Welcome, {{ me.first_name }} {{ me.last_name }}
+  <!-- ===== Header / Hero ===== -->
+  <div class="p-4 p-md-5 rounded-4 shadow-sm border bg-white mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="badge bg-dark">
+            <i class="bi bi-speedometer2 me-1"></i> Dashboard
+          </span>
+          <span class="text-muted small">
+            <i class="bi bi-clock me-1"></i> Updated just now
+          </span>
+        </div>
+
+        <h2 class="fw-bold mb-1">Welcome back, {{ me.first_name }}</h2>
+        <div class="text-muted">
+          Manage bookings, view deals, and plan your next trip with confidence.
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('hotels') }}" class="btn btn-dark">
+          <i class="bi bi-search me-2"></i> Find Hotels
+        </a>
+        <a href="{{ url_for('deals') }}" class="btn btn-outline-dark">
+          <i class="bi bi-tags me-2"></i> Deals
+        </a>
       </div>
     </div>
   </div>
 
-  <div class="row g-4">
-    <!-- Profile card -->
+  <!-- ===== Stats row ===== -->
+  {# IMPORTANT: stats must use ALL bookings if provided by route #}
+  {% set data = all_bookings if all_bookings is defined else bookings %}
+  {% set total_bookings = data|length if data else 0 %}
+  {% set cancelled_list = (data|selectattr('booking_status','equalto','CANCELLED')|list) if data else [] %}
+  {% set active_list = (data|rejectattr('booking_status','equalto','CANCELLED')|list) if data else [] %}
+  {% set active_bookings = active_list|length %}
+  {% set cancelled_bookings = cancelled_list|length %}
+
+  <div class="row g-3 mb-4">
     <div class="col-md-4">
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <h5 class="fw-bold mb-3">Your Profile</h5>
-
-          <div class="mb-2"><span class="text-muted">ID:</span> {{ me.user_id }}</div>
-          <div class="mb-2"><span class="text-muted">Name:</span> {{ me.first_name }} {{ me.last_name }}</div>
-          <div class="mb-2"><span class="text-muted">Email:</span> {{ me.email }}</div>
-
-          <a href="{{ url_for('hotels') }}" class="btn btn-dark w-100 mt-3">
-            Start Booking
-          </a>
+      <div class="card shadow-sm border-0 rounded-4 h-100">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="text-muted small">Total Bookings</div>
+              <div class="fw-bold fs-3">{{ total_bookings }}</div>
+            </div>
+            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center"
+              style="width:44px;height:44px;">
+              <i class="bi bi-receipt fs-5"></i>
+            </div>
+          </div>
+          <div class="text-muted small mt-2">All your bookings in one place.</div>
         </div>
       </div>
     </div>
 
-    <!-- Quick actions + Bookings -->
-    <div class="col-md-8 d-flex flex-column gap-4">
-      <div class="card shadow-sm mb-4">
-        <div class="card-body">
-          <h5 class="fw-bold mb-3">Quick Actions</h5>
-
-          <div class="d-flex flex-wrap gap-2">
-            <a class="btn btn-outline-dark" href="{{ url_for('hotels') }}">Browse Hotels</a>
-            <a class="btn btn-outline-dark" href="{{ url_for('deals') }}">View Deals</a>
-            <a class="btn btn-outline-dark" href="{{ url_for('gallery') }}">Gallery</a>
-            <a class="btn btn-outline-dark" href="{{ url_for('contact') }}">Support</a>
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 rounded-4 h-100">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="text-muted small">Active</div>
+              <div class="fw-bold fs-3">{{ active_bookings }}</div>
+            </div>
+            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center"
+              style="width:44px;height:44px;">
+              <i class="bi bi-check2-circle fs-5"></i>
+            </div>
           </div>
+          <div class="text-muted small mt-2">Confirmed / pending stays.</div>
         </div>
       </div>
+    </div>
 
-      <!-- Your Bookings -->
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h5 class="fw-bold mb-0">Your Bookings</h5>
-            {% if bookings and bookings|length > 0 %}
-            <span class="badge bg-dark">{{ bookings|length }}</span>
-            {% endif %}
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 rounded-4 h-100">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="text-muted small">Cancelled</div>
+              <div class="fw-bold fs-3">{{ cancelled_bookings }}</div>
+            </div>
+            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center"
+              style="width:44px;height:44px;">
+              <i class="bi bi-x-circle fs-5"></i>
+            </div>
           </div>
-
-          {% if bookings and bookings|length > 0 %}
-          <div class="table-responsive">
-            <table id="usersTable" class="table table-hover align-middle mb-0">
-              <thead class="table-light">
-                <tr>
-                  <th>Code</th>
-                  <th>Hotel</th>
-                  <th>Dates</th>
-                  <th>Status</th>
-                  <th class="text-end">Total</th>
-                  <th style="width: 220px;">Action</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {% for b in bookings %}
-                <tr>
-                  <td class="fw-semibold">{{ b.booking_code }}</td>
-
-                  <td>
-                    {{ b.hotel_name }}<br>
-                    <span class="text-muted small">{{ b.city }}</span>
-                  </td>
-
-                  <td>{{ b.check_in }} → {{ b.check_out }}</td>
-
-                  <td>
-                    <span class="badge
-                      {% if b.booking_status == 'CONFIRMED' %} bg-success
-                      {% elif b.booking_status == 'CANCELLED' %} bg-danger
-                      {% else %} bg-warning text-dark
-                      {% endif %}">
-                      {{ b.booking_status }}
-                    </span>
-                  </td>
-
-                  <td class="text-end">
-                    {% if b.currency_code == 'GBP' %}£
-                    {% elif b.currency_code == 'USD' %}$
-                    {% elif b.currency_code == 'EUR' %}€
-                    {% else %}NRS
-                    {% endif %}
-                    {{ b.total_in_currency }}
-                    <div class="small text-muted">£{{ b.total_gbp }} base</div>
-                  </td>
-
-                  <td>
-                    {% if b.booking_status != 'CANCELLED' %}
-                    <form method="POST" action="{{ url_for('cancel_booking', booking_id=b.booking_id) }}">
-                      <input type="text" name="reason" class="form-control form-control-sm mb-2"
-                        placeholder="Reason (optional)">
-
-                      <div class="form-check mb-2">
-                        <input class="form-check-input" type="checkbox" value="1" id="del{{ b.booking_id }}"
-                          name="delete_after">
-                        <label class="form-check-label small" for="del{{ b.booking_id }}">
-                          Delete after cancel
-                        </label>
-                      </div>
-
-                      <button class="btn btn-outline-danger btn-sm w-100"
-                        onclick="return confirm('Cancel this booking? Cancellation fees may apply.')">
-                        Cancel
-                      </button>
-                    </form>
-                    {% else %}
-                    <span class="text-muted small">Already cancelled</span>
-
-                    <!-- Optional: allow deleting cancelled bookings -->
-                    <form method="POST" action="{{ url_for('delete_booking', booking_id=b.booking_id) }}" class="mt-2">
-                      <button class="btn btn-outline-dark btn-sm w-100"
-                        onclick="return confirm('Delete this cancelled booking permanently?')">
-                        Delete
-                      </button>
-                    </form>
-                    {% endif %}
-                  </td>
-
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-          {% else %}
-          <p class="text-muted mb-0">No bookings yet. Book a room to see it here.</p>
-          {% endif %}
+          <div class="text-muted small mt-2">Bookings you cancelled.</div>
         </div>
       </div>
-
     </div>
   </div>
 
+  <!-- ===== Main grid ===== -->
+  <div class="row g-4 align-items-start">
+
+    <!-- LEFT COLUMN -->
+    <div class="col-lg-4">
+
+      <!-- Profile -->
+      <div class="card shadow-sm rounded-4 overflow-hidden mb-4">
+        <div class="p-4 text-white" style="background: linear-gradient(135deg, #111, #333);">
+          <div class="d-flex align-items-center gap-3">
+            <div
+              class="rounded-circle bg-white text-dark overflow-hidden d-flex align-items-center justify-content-center"
+              style="width:56px;height:56px;font-weight:700;flex:0 0 56px;">
+              {% if session.get('profile_image') %}
+              <img src="{{ url_for('static', filename='uploads/profiles/' ~ session.get('profile_image')) }}"
+                alt="Profile" style="width:100%;height:100%;object-fit:cover;">
+              {% else %}
+              {{ me.first_name[0]|upper }}
+              {% endif %}
+            </div>
+
+            <div>
+              <div class="fw-bold fs-5">{{ me.first_name }} {{ me.last_name }}</div>
+              <div class="text-white-50 small">{{ me.email }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="fw-bold">Your Profile</div>
+            <span class="badge bg-light text-dark border">ID: {{ me.user_id }}</span>
+          </div>
+
+          <div class="d-grid gap-2">
+            <a href="{{ url_for('profile') }}" class="btn btn-outline-dark">
+              <i class="bi bi-person-lines-fill me-2"></i> Edit Profile
+            </a>
+            <a href="{{ url_for('hotels') }}" class="btn btn-dark">
+              <i class="bi bi-calendar2-check me-2"></i> Start Booking
+            </a>
+          </div>
+
+          <hr class="my-4">
+
+          <div class="text-muted small">
+            Tip: Use Deals to check peak/off-peak pricing before booking.
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="card shadow-sm rounded-4">
+        <div class="card-body p-4">
+          <div class="fw-bold mb-3">Quick Actions</div>
+
+          <div class="d-grid gap-2">
+            <a class="btn btn-outline-dark text-start" href="{{ url_for('hotels') }}">
+              <i class="bi bi-buildings me-2"></i> Browse Hotels
+            </a>
+            <a class="btn btn-outline-dark text-start" href="{{ url_for('deals') }}">
+              <i class="bi bi-tags me-2"></i> View Deals
+            </a>
+            <a class="btn btn-outline-dark text-start" href="{{ url_for('contact') }}">
+              <i class="bi bi-headset me-2"></i> Support
+            </a>
+          </div>
+
+          <div class="text-muted small mt-3">
+            Need help? Contact support anytime.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="col-lg-8">
+      <div class="card shadow-sm rounded-4">
+        <div class="card-body p-4">
+
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+            <div>
+              <h5 class="fw-bold mb-1">Your Bookings</h5>
+              <div class="text-muted small">View, cancel, or delete cancelled bookings.</div>
+            </div>
+          </div>
+
+          {% if data and data|length > 0 %}
+
+          <!-- tabs moved OUTSIDE header row (fixes layout glitches) -->
+          <ul class="nav nav-pills gap-2 mb-3" id="bookingTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="tab-active" data-bs-toggle="pill" data-bs-target="#pane-active"
+                type="button" role="tab">
+                Active <span class="badge bg-dark ms-2">{{ active_list|length }}</span>
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="tab-cancelled" data-bs-toggle="pill" data-bs-target="#pane-cancelled"
+                type="button" role="tab">
+                Cancelled History <span class="badge bg-secondary ms-2">{{ cancelled_list|length }}</span>
+              </button>
+            </li>
+          </ul>
+
+          <div class="tab-content">
+
+            <!-- ACTIVE BOOKINGS -->
+            <div class="tab-pane fade show active" id="pane-active" role="tabpanel">
+              {% if active_list|length > 0 %}
+              <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Code</th>
+                      <th>Hotel</th>
+                      <th>Dates</th>
+                      <th>Status</th>
+                      <th class="text-end">Total</th>
+                      <th style="width:230px;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for b in active_list %}
+                    <tr>
+                      <td class="fw-semibold">{{ b.booking_code }}</td>
+
+                      <td>
+                        <div class="fw-semibold">{{ b.hotel_name }}</div>
+                        <div class="text-muted small">{{ b.city }}</div>
+                      </td>
+
+                      <td>
+                        <div class="fw-semibold">{{ b.check_in }} → {{ b.check_out }}</div>
+                        <div class="text-muted small"><i class="bi bi-calendar-event me-1"></i> Stay dates</div>
+                      </td>
+
+                      <td>
+                        <span class="badge rounded-pill
+                          {% if b.booking_status == 'CONFIRMED' %} bg-success
+                          {% else %} bg-warning text-dark
+                          {% endif %}">
+                          {{ b.booking_status }}
+                        </span>
+                      </td>
+
+                      <td class="text-end">
+                        <div class="fw-semibold">
+                          {% if b.currency_code == 'GBP' %}£
+                          {% elif b.currency_code == 'USD' %}$
+                          {% elif b.currency_code == 'EUR' %}€
+                          {% else %}NRS
+                          {% endif %}
+                          {{ b.total_in_currency }}
+                        </div>
+                        <div class="small text-muted">£{{ b.total_gbp }} base</div>
+                      </td>
+
+                      <td>
+                        <form method="POST" action="{{ url_for('cancel_booking', booking_id=b.booking_id) }}">
+                          <input type="text" name="reason" class="form-control form-control-sm mb-2"
+                            placeholder="Reason (optional)">
+
+                          <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" value="1" id="del{{ b.booking_id }}"
+                              name="delete_after">
+                            <label class="form-check-label small" for="del{{ b.booking_id }}">
+                              Delete permanently after cancel
+                            </label>
+                          </div>
+
+                          <button class="btn btn-outline-danger btn-sm w-100"
+                            onclick="return confirm('Cancel this booking? Cancellation fees may apply.')">
+                            <i class="bi bi-x-circle me-1"></i> Cancel
+                          </button>
+                        </form>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              {% else %}
+              <div class="text-muted">No active bookings.</div>
+              {% endif %}
+            </div>
+
+            <!-- CANCELLED HISTORY -->
+            <div class="tab-pane fade" id="pane-cancelled" role="tabpanel">
+              {% if cancelled_list|length > 0 %}
+              <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Code</th>
+                      <th>Hotel</th>
+                      <th>Dates</th>
+                      <th class="text-end">Total</th>
+                      <th style="width:180px;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for b in cancelled_list %}
+                    <tr>
+                      <td class="fw-semibold">{{ b.booking_code }}</td>
+
+                      <td>
+                        <div class="fw-semibold">{{ b.hotel_name }}</div>
+                        <div class="text-muted small">{{ b.city }}</div>
+                      </td>
+
+                      <td>
+                        <div class="fw-semibold">{{ b.check_in }} → {{ b.check_out }}</div>
+                        <span class="badge bg-secondary mt-1">CANCELLED</span>
+                      </td>
+
+                      <td class="text-end">
+                        <div class="fw-semibold">
+                          {% if b.currency_code == 'GBP' %}£
+                          {% elif b.currency_code == 'USD' %}$
+                          {% elif b.currency_code == 'EUR' %}€
+                          {% else %}NRS
+                          {% endif %}
+                          {{ b.total_in_currency }}
+                        </div>
+                        <div class="small text-muted">£{{ b.total_gbp }} base</div>
+                      </td>
+
+                      <td>
+                        <form method="POST" action="{{ url_for('delete_booking', booking_id=b.booking_id) }}">
+                          <button class="btn btn-outline-dark btn-sm w-100"
+                            onclick="return confirm('Delete this cancelled booking permanently?')">
+                            <i class="bi bi-trash me-1"></i> Delete
+                          </button>
+                        </form>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              {% else %}
+              <div class="text-muted">No cancelled bookings yet.</div>
+              {% endif %}
+            </div>
+
+          </div>
+
+          {% else %}
+          <!-- Keep your empty state exactly -->
+          <div class="text-center p-5 bg-light rounded-4">
+            <div class="mb-2"><i class="bi bi-calendar2-x fs-1"></i></div>
+            <h5 class="fw-bold mb-2">No bookings yet</h5>
+            <div class="text-muted mb-3">Start exploring hotels and book your first stay.</div>
+            <a href="{{ url_for('hotels') }}" class="btn btn-dark">
+              <i class="bi bi-search me-2"></i> Browse Hotels
+            </a>
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+
+  </div>
 </div>
 
 {% endblock %}

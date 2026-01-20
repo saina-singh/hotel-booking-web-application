@@ -21,15 +21,32 @@
   </div>
 
   <!-- Hotel title -->
-  <div class="mb-4">
-    <h2 class="fw-bold mb-1">{{ hotel.hotel_name }}</h2>
-    {% if season %}
-    <span class="badge bg-success mb-2">
-      {{ season }} season pricing
-    </span>
-    {% endif %}
-    <div class="text-muted">{{ hotel.city }} • {{ hotel.address }}</div>
+  <div class="card shadow-sm mb-4">
+    <div class="card-body p-3 p-md-4">
+      <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Pricing season</label>
+          <select name="season" class="form-select" onchange="this.form.submit()">
+            <option value="" {% if not request.args.get('season') %}selected{% endif %}>Auto (from check-in)</option>
+            <option value="peak" {% if request.args.get('season')=='peak' %}selected{% endif %}>Peak season</option>
+            <option value="off_peak" {% if request.args.get('season')=='off_peak' %}selected{% endif %}>Off-peak season
+            </option>
+          </select>
+          <div class="text-muted small mt-1">Use this to preview prices instantly.</div>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Check-in date (optional)</label>
+          <input type="date" name="checkin" value="{{ checkin or '' }}" class="form-control">
+        </div>
+
+        <div class="col-md-4 d-grid">
+          <button class="btn btn-dark" type="submit">Update pricing</button>
+        </div>
+      </form>
+    </div>
   </div>
+
 
   <!-- Rooms list -->
   <div class="row g-4">
@@ -56,10 +73,11 @@
               From £{{ r.nightly_from_gbp }}/night
             </div>
 
-            <a href="{{ url_for('room_details', hotel_id=hotel.hotel_id, room_code=r.code) }}"
+            <a href="{{ url_for('room_details', hotel_id=hotel.hotel_id, room_code=r.code, checkin=checkin, season=request.args.get('season')) }}"
               class="btn btn-dark w-100">
               View Room
             </a>
+
           </div>
         </div>
 

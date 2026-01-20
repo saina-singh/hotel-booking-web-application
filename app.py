@@ -499,6 +499,7 @@ def profile():
 @app.route('/hotels/<int:hotel_id>')
 def hotel_details(hotel_id):
     checkin_str = (request.args.get("checkin") or "").strip()  
+    season_override = (request.args.get("season") or "").strip().lower()
     checkin_date = parse_checkin_arg(checkin_str)            
     if not checkin_date:
         checkin_date = date.today()  
@@ -552,7 +553,7 @@ def hotel_details(hotel_id):
         "EXECUTIVE": "images/rooms/executive.jpg",
     }
 
-    peak = is_peak_from_checkin(checkin_str)
+    peak = resolve_season(checkin_str, season_override)
     standard_rate = float(hotel["standard_peak_gbp"] if peak else hotel["standard_offpeak_gbp"])
 
     for r in rooms:
@@ -572,7 +573,8 @@ def hotel_details(hotel_id):
 
 @app.route('/hotels/<int:hotel_id>/rooms/<room_code>')
 def room_details(hotel_id, room_code):
-    checkin_str = (request.args.get("checkin") or "").strip() 
+    checkin_str = (request.args.get("checkin") or "").strip()
+    season_override = (request.args.get("season") or "").strip().lower()
     checkin_date = parse_checkin_arg(checkin_str)            
     if not checkin_date:
         checkin_date = date.today()
@@ -631,7 +633,7 @@ def room_details(hotel_id, room_code):
     }
     room["img"] = room_images.get(room["code"], "images/rooms/default.jpg")
 
-    peak = is_peak_season(checkin_date)  # NEW
+    peak = resolve_season(checkin_str, season_override)
     standard_rate = float(hotel["standard_peak_gbp"] if peak else hotel["standard_offpeak_gbp"])  # NEW
     room["nightly_from_gbp"] = round(standard_rate * float(room["base_multiplier"]), 2)
 
@@ -1514,6 +1516,13 @@ def is_peak_from_checkin(checkin_str: Optional[str]) -> bool:
     except ValueError:
         m = date.today().month
         return (4 <= m <= 8) or (m in (11, 12))
+
+def resolve_season(checkin_str: Optional[str], season_override: str) -> bool:
+    if season_override == "peak":
+        return True
+    if season_override == "off_peak":
+        return False
+    return is_peak_from_checkin(checkin_str)
 
 if __name__== '__main__':
     app.run(host="127.0.0.1", port=5000, debug=True)

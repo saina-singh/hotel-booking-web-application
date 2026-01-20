@@ -884,6 +884,19 @@ CREATE TABLE cookie_preferences (
 SHOW TABLES LIKE 'cookie_preferences';
 DESCRIBE cookie_preferences;
 
+CREATE TABLE IF NOT EXISTS site_settings (
+  setting_key VARCHAR(50) PRIMARY KEY,
+  setting_value VARCHAR(255) NOT NULL,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- defaults
+INSERT INTO site_settings (setting_key, setting_value)
+VALUES
+  ('site_name', 'World Hotels'),
+  ('base_currency', 'GBP')
+ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value);
+
 
 
 

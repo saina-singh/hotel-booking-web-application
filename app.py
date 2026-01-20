@@ -7,6 +7,7 @@ from dateutil.relativedelta import relativedelta
 from flask import flash, jsonify, send_file
 from datetime import date
 from io import BytesIO
+from typing import Optional
 
 import os
 from werkzeug.utils import secure_filename
@@ -177,6 +178,7 @@ def deals():
 def hotels():
     searched_city = (request.args.get("city") or "").strip()
     room = (request.args.get("room") or "").strip().upper()
+    checkin = (request.args.get("checkin") or "").strip()  
 
     cursor = db.cursor(dictionary=True)
 
@@ -188,12 +190,10 @@ def hotels():
     """
     params = []
 
-    # filter by city
     if searched_city:
         sql += " AND c.name LIKE %s"
         params.append(f"%{searched_city}%")
 
-    # filter by room type
     if room:
         sql += """
             AND EXISTS (
@@ -236,7 +236,13 @@ def hotels():
         filename = city_images.get(h["city"], "default.jpg")
         h["img"] = f"images/hotels/{filename}"
 
-    return render_template("hotels.html", hotels=hotels_list, searched_city=searched_city, searched_room=room)
+    return render_template(
+        "hotels.html",
+        hotels=hotels_list,
+        searched_city=searched_city,
+        searched_room=room,
+        checkin=checkin  
+    )
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -489,9 +495,13 @@ def profile():
 
 @app.route('/hotels/<int:hotel_id>')
 def hotel_details(hotel_id):
+    checkin_str = (request.args.get("checkin") or "").strip()  
+    checkin_date = parse_checkin_arg(checkin_str)            
+    if not checkin_date:
+        checkin_date = date.today()  
+
     cursor = db.cursor(dictionary=True)
 
-    # Hotel + city + rates + capacity
     cursor.execute("""
         SELECT h.hotel_id, h.hotel_name, h.address, c.name AS city,
                hcr.total_rooms, hcr.standard_peak_gbp, hcr.standard_offpeak_gbp
@@ -505,7 +515,6 @@ def hotel_details(hotel_id):
         cursor.close()
         return "Hotel not found", 404
 
-    # Rooms + inventory + multipliers
     cursor.execute("""
         SELECT rt.room_type_id, rt.code, rt.max_guests,
                rt.base_multiplier, rt.second_guest_multiplier,
@@ -517,7 +526,6 @@ def hotel_details(hotel_id):
     """, (hotel_id,))
     rooms = cursor.fetchall()
 
-    # Features per room type
     cursor.execute("""
         SELECT rt.code AS room_code, GROUP_CONCAT(f.name ORDER BY f.name SEPARATOR ', ') AS features
         FROM room_type_features rtf
@@ -531,7 +539,6 @@ def hotel_details(hotel_id):
 
     features_map = {r["room_code"]: r["features"] for r in features_rows}
 
-    # Attach features + images + simple nightly pricing preview
     room_images = {
         "STANDARD": "images/rooms/standard.jpg",
         "DOUBLE": "images/rooms/double.jpg",
@@ -542,27 +549,33 @@ def hotel_details(hotel_id):
         "EXECUTIVE": "images/rooms/executive.jpg",
     }
 
-    # show a default “today” price preview (offpeak/peak depends on month, keep simple)
-    # (you can improve later with real check-in date)
-    month = date.today().month
-    is_peak = (4 <= month <= 8) or (month in (11, 12))
-    standard_rate = float(hotel["standard_peak_gbp"] if is_peak else hotel["standard_offpeak_gbp"])
+    peak = is_peak_from_checkin(checkin_str)
+    standard_rate = float(hotel["standard_peak_gbp"] if peak else hotel["standard_offpeak_gbp"])
 
     for r in rooms:
         r["features"] = features_map.get(r["code"], "—")
         r["img"] = room_images.get(r["code"], "images/rooms/default.jpg")
         r["nightly_from_gbp"] = round(standard_rate * float(r["base_multiplier"]), 2)
 
-    # hotel image (city-based)
     hotel["img"] = f"images/hotels/{hotel['city'].lower().replace(' ', '')}.jpg"
 
-    return render_template("hotel_details.html", hotel=hotel, rooms=rooms)
+    return render_template(
+        "hotel_details.html",
+        hotel=hotel,
+        rooms=rooms,
+        checkin=checkin_str,          
+        season=("Peak" if peak else "Off-Peak"),  
+    )
 
 @app.route('/hotels/<int:hotel_id>/rooms/<room_code>')
 def room_details(hotel_id, room_code):
+    checkin_str = (request.args.get("checkin") or "").strip() 
+    checkin_date = parse_checkin_arg(checkin_str)            
+    if not checkin_date:
+        checkin_date = date.today()
+
     cursor = db.cursor(dictionary=True)
 
-    # Hotel + city + rates (safe with LEFT JOIN)
     cursor.execute("""
         SELECT h.hotel_id, h.hotel_name, h.address, c.name AS city,
                COALESCE(hcr.standard_peak_gbp, 0) AS standard_peak_gbp,
@@ -578,7 +591,6 @@ def room_details(hotel_id, room_code):
         cursor.close()
         return "Hotel not found", 404
 
-    # Room info + inventory
     cursor.execute("""
         SELECT rt.room_type_id, rt.code, rt.max_guests,
                rt.base_multiplier, rt.second_guest_multiplier,
@@ -594,7 +606,6 @@ def room_details(hotel_id, room_code):
         cursor.close()
         return "Room type not found", 404
 
-    # Features
     cursor.execute("""
         SELECT f.name
         FROM room_type_features rtf
@@ -606,7 +617,6 @@ def room_details(hotel_id, room_code):
     features = [row["name"] for row in cursor.fetchall()]
     cursor.close()
 
-    # Images
     room_images = {
         "STANDARD": "images/rooms/standard.jpg",
         "DOUBLE": "images/rooms/double.jpg",
@@ -618,14 +628,11 @@ def room_details(hotel_id, room_code):
     }
     room["img"] = room_images.get(room["code"], "images/rooms/default.jpg")
 
-    # Pricing preview (simple: pick peak/offpeak based on current month)
-    from datetime import date
-    m = date.today().month
-    is_peak = (4 <= m <= 8) or (m in (11, 12))
-    standard_rate = float(hotel["standard_peak_gbp"] if is_peak else hotel["standard_offpeak_gbp"])
+    peak = is_peak_season(checkin_date)  # NEW
+    standard_rate = float(hotel["standard_peak_gbp"] if peak else hotel["standard_offpeak_gbp"])  # NEW
     room["nightly_from_gbp"] = round(standard_rate * float(room["base_multiplier"]), 2)
 
-    # Professional “copy” per room type
+    # (rest of your copy stays same)
     room_copy = {
         "SINGLE": {
             "title": "Perfect for solo travellers",
@@ -675,7 +682,13 @@ def room_details(hotel_id, room_code):
     room["why_list"] = info["why"]
     room["features_list"] = features
 
-    return render_template("room_details.html", hotel=hotel, room=room)
+    return render_template(
+        "room_details.html",
+        hotel=hotel,
+        room=room,
+        checkin=checkin_str,                
+        season=("Peak" if peak else "Off-Peak"), 
+    )
 
 @app.route('/book/<int:hotel_id>', methods=['POST'])
 def book(hotel_id):
@@ -1427,6 +1440,76 @@ def admin_settings():
         "base_currency": get_setting("base_currency", "GBP"),
     }
     return render_template("admin/admin_settings.html", settings=settings)
+
+@app.route("/season-pricing")
+def season_pricing():
+    checkin = request.args.get("checkin")
+    season = None
+
+    if checkin:
+        y, m, d = map(int, checkin.split("-"))
+        season = "peak" if (4 <= m <= 8 or m in (11, 12)) else "off_peak"
+
+    rates = [
+        {"city": "Aberdeen", "capacity": 90, "peak": 140, "off_peak": 70},
+        {"city": "Belfast", "capacity": 80, "peak": 130, "off_peak": 70},
+        {"city": "Birmingham", "capacity": 110, "peak": 150, "off_peak": 75},
+        {"city": "Bristol", "capacity": 100, "peak": 140, "off_peak": 70},
+        {"city": "Cardiff", "capacity": 90, "peak": 130, "off_peak": 70},
+        {"city": "Edinburgh", "capacity": 120, "peak": 160, "off_peak": 80},
+        {"city": "Glasgow", "capacity": 140, "peak": 150, "off_peak": 75},
+        {"city": "London", "capacity": 160, "peak": 200, "off_peak": 100},
+        {"city": "Manchester", "capacity": 150, "peak": 180, "off_peak": 90},
+        {"city": "New Castle", "capacity": 90, "peak": 120, "off_peak": 70},
+        {"city": "Norwich", "capacity": 90, "peak": 130, "off_peak": 70},
+        {"city": "Nottingham", "capacity": 110, "peak": 130, "off_peak": 70},
+        {"city": "Oxford", "capacity": 90, "peak": 180, "off_peak": 90},
+        {"city": "Plymouth", "capacity": 80, "peak": 180, "off_peak": 90},
+        {"city": "Swansea", "capacity": 70, "peak": 130, "off_peak": 70},
+        {"city": "Bournemouth", "capacity": 90, "peak": 130, "off_peak": 70},
+        {"city": "Kent", "capacity": 100, "peak": 140, "off_peak": 80},
+    ]
+
+    return render_template("season_pricing.html", rates=rates, season=season, checkin=checkin)
+
+def season_from_checkin(checkin_str: Optional[str]):
+    if not checkin_str:
+        return None
+    try:
+        m = datetime.strptime(checkin_str, "%Y-%m-%d").month
+        return "peak" if (4 <= m <= 8 or m in (11, 12)) else "off_peak"
+    except ValueError:
+        return None
+
+def parse_checkin_arg(checkin_str: Optional[str]):
+    """
+    Accepts YYYY-MM-DD (from <input type="date">).
+    Returns a datetime.date or None.
+    """
+    if not checkin_str:
+        return None
+    try:
+        return datetime.strptime(checkin_str, "%Y-%m-%d").date()
+    except ValueError:
+        return None
+
+def is_peak_season(d: date):
+    # Peak: April–August, November–December (based on CHECK-IN month)
+    return (4 <= d.month <= 8) or (d.month in (11, 12))
+
+def is_peak_from_checkin(checkin_str: Optional[str]) -> bool:
+    if not checkin_str:
+        # fallback to today if no checkin passed
+        m = date.today().month
+        return (4 <= m <= 8) or (m in (11, 12))
+
+    try:
+        d = datetime.strptime(checkin_str, "%Y-%m-%d").date()
+        m = d.month
+        return (4 <= m <= 8) or (m in (11, 12))
+    except ValueError:
+        m = date.today().month
+        return (4 <= m <= 8) or (m in (11, 12))
 
 if __name__== '__main__':
     app.run(host="127.0.0.1", port=5000, debug=True)

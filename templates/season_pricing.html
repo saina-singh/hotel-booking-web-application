@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Peak & Off-Peak Prices</title>
+{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+    <div>
+      <h2 class="fw-bold mb-1">Peak & Off-Peak Prices</h2>
+      <div class="text-muted">
+        Peak season applies for <b>April–August</b> and <b>November–December</b>.
+        <span class="text-muted">(Season is determined using the <b>check-in date</b>.)</span>
+      </div>
+    </div>
+
+    <a class="btn btn-outline-dark" href="{{ url_for('deals') }}">Back to Deals</a>
+  </div>
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-body p-4">
+      <form class="row g-3 align-items-end" method="get" action="{{ url_for('season_pricing') }}">
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Check-in date (optional)</label>
+          <input type="date" name="checkin" value="{{ checkin or '' }}" class="form-control">
+        </div>
+
+        <div class="col-md-4">
+          <button class="btn btn-dark w-100" type="submit">Check Season</button>
+        </div>
+
+        <div class="col-md-4">
+          {% if season %}
+          <div class="alert alert-success mb-0">
+            Your check-in is: <b>{{ "Peak" if season == "peak" else "Off-Peak" }}</b>
+          </div>
+          {% else %}
+          <div class="alert alert-light mb-0">
+            Pick a date to auto-detect peak/off-peak.
+          </div>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body p-4">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>City</th>
+              <th>Capacity (rooms)</th>
+              <th>Peak (GBP) / night</th>
+              <th>Off-Peak (GBP) / night</th>
+              <th class="text-end"></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for r in rates %}
+            <tr>
+              <td class="fw-semibold">{{ r.city }}</td>
+              <td class="text-muted">{{ r.capacity }}</td>
+
+              <td>
+                <span class="badge {{ 'bg-success' if season == 'peak' else 'bg-secondary' }}">
+                  £{{ r.peak }}
+                </span>
+              </td>
+
+              <td>
+                <span class="badge {{ 'bg-success' if season == 'off_peak' else 'bg-secondary' }}">
+                  £{{ r.off_peak }}
+                </span>
+              </td>
+
+              <td class="text-end">
+                <a class="btn btn-sm btn-outline-dark" href="{{ url_for('hotels', city=r.city, checkin=checkin) }}">
+                  View hotels
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+
+        </table>
+      </div>
+
+      <div class="text-muted small mt-3">
+        Rates shown are for <b>Standard Room</b> per night in GBP. Final total may vary based on room type, guests,
+        discounts and stay length.
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

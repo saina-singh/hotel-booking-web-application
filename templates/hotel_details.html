@@ -23,6 +23,11 @@
   <!-- Hotel title -->
   <div class="mb-4">
     <h2 class="fw-bold mb-1">{{ hotel.hotel_name }}</h2>
+    {% if season %}
+    <span class="badge bg-success mb-2">
+      {{ season }} season pricing
+    </span>
+    {% endif %}
     <div class="text-muted">{{ hotel.city }} • {{ hotel.address }}</div>
   </div>
 

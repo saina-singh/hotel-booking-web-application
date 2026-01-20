@@ -166,6 +166,10 @@ def about():
 def contact():
     return render_template("contact.html")
 
+@app.route('/privacy')
+def privacy():
+    return render_template("privacy.html")
+
 @app.route('/gallery')
 def gallery():
     return render_template('gallery.html')

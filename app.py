@@ -264,6 +264,9 @@ def login():
             save_cookie_prefs(session["user_id"], 0, 0)
             flash("Logged in successfully!", "success")
 
+            next_url = request.args.get("next")
+            if next_url:
+                return redirect(next_url)
             return redirect(url_for('admin_dashboard' if user['role']=='ADMIN' else 'user_dashboard'))
 
         flash("Invalid email or password.", "danger")
@@ -693,7 +696,8 @@ def room_details(hotel_id, room_code):
 @app.route('/book/<int:hotel_id>', methods=['POST'])
 def book(hotel_id):
     if not session.get('loggedin'):
-        return redirect(url_for('login'))
+        flash("Please log in or create an account to book a room.", "warning")
+        return redirect(url_for('login', next=request.referrer or url_for('hotels')))
 
     try:
         # ---------- form inputs ----------

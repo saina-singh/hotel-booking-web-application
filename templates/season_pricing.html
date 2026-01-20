@@ -7,34 +7,135 @@
 {% block body %}
 <div class="container my-5">
 
-  <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
-    <div>
-      <h2 class="fw-bold mb-1">Peak & Off-Peak Prices</h2>
-      <div class="text-muted">
-        Peak season applies for <b>April–August</b> and <b>November–December</b>.
-        <span class="text-muted">(Season is determined using the <b>check-in date</b>.)</span>
+  <!-- HERO -->
+  <div class="card shadow-sm overflow-hidden border-0 mb-4">
+    <div class="row g-0 align-items-stretch">
+      <div class="col-lg-6 p-4 p-lg-5 d-flex flex-column justify-content-center">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+          <div>
+            <h2 class="fw-bold mb-2">Peak & Off-Peak Prices</h2>
+            <div class="text-muted">
+              Peak season applies for <b>April–August</b> and <b>November–December</b>.
+              <span class="text-muted">(Season is determined using the <b>check-in date</b>.)</span>
+            </div>
+          </div>
+
+          <a class="btn btn-outline-dark btn-sm" href="{{ url_for('deals') }}">
+            <i class="bi bi-arrow-left me-1"></i> Back to Deals
+          </a>
+        </div>
+
+        <!-- season pill (looks modern) -->
+        <div class="mt-3">
+          {% if season %}
+          <span class="badge bg-success rounded-pill px-3 py-2">
+            <i class="bi bi-calendar2-check me-1"></i>
+            {{ "Peak" if season == "peak" else "Off-Peak" }} pricing applies
+            {% if checkin %}<span class="ms-2 opacity-75">({{ checkin }})</span>{% endif %}
+          </span>
+          {% else %}
+          <span class="badge bg-light text-dark border rounded-pill px-3 py-2">
+            <i class="bi bi-info-circle me-1"></i>
+            Select a date to auto-detect season
+          </span>
+          {% endif %}
+        </div>
+
+        <div class="text-muted small mt-3">
+          Tip: Try different dates to compare how rates shift between seasons.
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <!-- Use an existing image you already have -->
+        <img src="{{ url_for('static', filename='images/season.jpg') }}" class="w-100 h-100"
+          style="object-fit: cover; min-height: 260px;" alt="Season pricing banner">
+      </div>
+    </div>
+  </div>
+
+  <!-- QUICK INFO CARDS -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-start gap-3">
+            <div class="rounded-4 border d-flex align-items-center justify-content-center"
+              style="width:52px;height:52px;">
+              <i class="bi bi-sun fs-4"></i>
+            </div>
+            <div>
+              <div class="fw-bold">Peak Season</div>
+              <div class="text-muted small mb-2">Higher demand → higher base rates</div>
+              <div class="text-muted small">
+                <span class="badge bg-light text-dark border me-1">Apr</span>
+                <span class="badge bg-light text-dark border me-1">May</span>
+                <span class="badge bg-light text-dark border me-1">Jun</span>
+                <span class="badge bg-light text-dark border me-1">Jul</span>
+                <span class="badge bg-light text-dark border me-1">Aug</span>
+                <span class="badge bg-light text-dark border me-1">Nov</span>
+                <span class="badge bg-light text-dark border">Dec</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-muted small mt-3">
+            Best for: holidays, festivals, summer travel.
+          </div>
+        </div>
       </div>
     </div>
 
-    <a class="btn btn-outline-dark" href="{{ url_for('deals') }}">Back to Deals</a>
+    <div class="col-md-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-start gap-3">
+            <div class="rounded-4 border d-flex align-items-center justify-content-center"
+              style="width:52px;height:52px;">
+              <i class="bi bi-cloud-moon fs-4"></i>
+            </div>
+            <div>
+              <div class="fw-bold">Off-Peak Season</div>
+              <div class="text-muted small mb-2">Lower demand → better value</div>
+              <div class="text-muted small">
+                All months outside <b>Apr–Aug</b> and <b>Nov–Dec</b>.
+              </div>
+            </div>
+          </div>
+          <div class="text-muted small mt-3">
+            Best for: budget trips, quieter stays, better deals.
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
+  <!-- DATE CHECKER -->
   <div class="card shadow-sm mb-4">
     <div class="card-body p-4">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+          <div class="fw-bold">Season Checker</div>
+          <div class="text-muted small">Pick a check-in date and we’ll highlight the season pricing.</div>
+        </div>
+      </div>
+
       <form class="row g-3 align-items-end" method="get" action="{{ url_for('season_pricing') }}">
-        <div class="col-md-4">
-          <label class="form-label fw-semibold">Check-in date (optional)</label>
+        <div class="col-md-5">
+          <label class="form-label fw-semibold">Check-in date</label>
           <input type="date" name="checkin" value="{{ checkin or '' }}" class="form-control">
         </div>
 
-        <div class="col-md-4">
-          <button class="btn btn-dark w-100" type="submit">Check Season</button>
+        <div class="col-md-3">
+          <button class="btn btn-dark w-100" type="submit">
+            <i class="bi bi-search me-1"></i> Check Season
+          </button>
         </div>
 
         <div class="col-md-4">
           {% if season %}
           <div class="alert alert-success mb-0">
-            Your check-in is: <b>{{ "Peak" if season == "peak" else "Off-Peak" }}</b>
+            Season: <b>{{ "Peak" if season == "peak" else "Off-Peak" }}</b>
+            {% if checkin %}<span class="text-muted">• {{ checkin }}</span>{% endif %}
           </div>
           {% else %}
           <div class="alert alert-light mb-0">
@@ -46,41 +147,62 @@
     </div>
   </div>
 
+  <!-- RATES TABLE -->
   <div class="card shadow-sm">
-    <div class="card-body p-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <div class="fw-bold">Standard Room Base Rates</div>
+        <div class="text-muted small">Shown per night in GBP (before multipliers & discounts).</div>
+      </div>
+
+      {% if season %}
+      <span class="badge bg-success rounded-pill px-3 py-2">
+        Highlighting: {{ "Peak" if season == "peak" else "Off-Peak" }}
+      </span>
+      {% endif %}
+    </div>
+
+    <div class="card-body p-0">
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
-              <th>City</th>
+              <th class="ps-4">City</th>
               <th>Capacity (rooms)</th>
               <th>Peak (GBP) / night</th>
               <th>Off-Peak (GBP) / night</th>
-              <th class="text-end"></th>
+              <th class="text-end pe-4"></th>
             </tr>
           </thead>
 
           <tbody>
             {% for r in rates %}
             <tr>
-              <td class="fw-semibold">{{ r.city }}</td>
+              <td class="ps-4">
+                <div class="fw-semibold">{{ r.city }}</div>
+                <div class="text-muted small">
+                  <i class="bi bi-geo-alt me-1"></i>United Kingdom
+                </div>
+              </td>
+
               <td class="text-muted">{{ r.capacity }}</td>
 
               <td>
-                <span class="badge {{ 'bg-success' if season == 'peak' else 'bg-secondary' }}">
+                <span class="badge rounded-pill px-3 py-2 {{ 'bg-success' if season == 'peak' else 'bg-secondary' }}">
                   £{{ r.peak }}
                 </span>
               </td>
 
               <td>
-                <span class="badge {{ 'bg-success' if season == 'off_peak' else 'bg-secondary' }}">
+                <span
+                  class="badge rounded-pill px-3 py-2 {{ 'bg-success' if season == 'off_peak' else 'bg-secondary' }}">
                   £{{ r.off_peak }}
                 </span>
               </td>
 
-              <td class="text-end">
+              <td class="text-end pe-4">
                 <a class="btn btn-sm btn-outline-dark" href="{{ url_for('hotels', city=r.city, checkin=checkin) }}">
-                  View hotels
+                  <i class="bi bi-building me-1"></i> View hotels
                 </a>
               </td>
             </tr>
@@ -90,9 +212,11 @@
         </table>
       </div>
 
-      <div class="text-muted small mt-3">
-        Rates shown are for <b>Standard Room</b> per night in GBP. Final total may vary based on room type, guests,
-        discounts and stay length.
+      <div class="p-4">
+        <div class="text-muted small">
+          Rates shown are for <b>Standard Room</b> per night in GBP. Final total may vary based on room type, guests,
+          discounts and stay length.
+        </div>
       </div>
     </div>
   </div>

@@ -4,291 +4,282 @@
 {% endblock %}
 
 {% block body %}
-<div class="admin-layout">
+<div class="container admin-page py-4">
+  <div class="admin-shell">
 
-  <aside class="admin-sidebar">
-    <div class="admin-brand">Admin Dashboard</div>
-    <nav class="admin-nav">
-      <a href="{{ url_for('admin_dashboard') }}" class="{% if endpoint == 'admin_dashboard' %}active{% endif %}">
-        <div class="admin-icon"><i class="bi bi-speedometer2"></i></div>
-        <div class="fw-semibold">Dashboard</div>
-      </a>
-      <a href="{{ url_for('admin_reservations') }}" class="{% if endpoint == 'admin_reservations' %}active{% endif %}">
-        <div class="admin-icon"><i class="bi bi-calendar-check"></i></div>
-        <div class="fw-semibold">Reservations</div>
-      </a>
-      <a href="{{ url_for('admin_rooms') }}" class="{% if endpoint == 'admin_rooms' %}active{% endif %}">
-        <div class="admin-icon"><i class="bi bi-door-open"></i></div>
-        <div class="fw-semibold">Rooms</div>
-      </a>
-      <a href="{{ url_for('admin_staffs') }}" class="{% if endpoint == 'admin_staffs' %}active{% endif %}">
-        <div class="admin-icon"><i class="bi bi-people"></i></div>
-        <div class="fw-semibold">Staffs</div>
-      </a>
-      <a href="{{ url_for('admin_analytics') }}" class="{% if endpoint == 'admin_analytics' %}active{% endif %}">
-        <div class="admin-icon"><i class="bi bi-bar-chart"></i></div>
-        <div class="fw-semibold">Analytics</div>
-      </a>
-      <a href="{{ url_for('admin_reports') }}" class="{% if endpoint == 'admin_reports' %}active{% endif %}">
-        <div class="admin-icon"><i class="bi bi-file-earmark-text"></i></div>
-        <div class="fw-semibold">Reports</div>
-      </a>
-      <a href="{{ url_for('admin_settings') }}" class="{% if endpoint == 'admin_settings' %}active{% endif %}">
-        <div class="admin-icon"><i class="bi bi-gear"></i></div>
-        <div class="fw-semibold">Settings</div>
-      </a>
-      <a href="{{ url_for('admin_users') }}" class="{% if endpoint == 'admin_users' %}active{% endif %}">
-        <div class="admin-icon"><i class="bi bi-person-badge"></i></div>
-        <div class="fw-semibold">Users</div>
-      </a>
-    </nav>
-  </aside>
-
-  <main class="admin-main">
-    {% include "admin/_admin_topbar.html" with context %}
-
-    {# --------------------------
-    Dummy fallback analytics
-    -------------------------- #}
-    {% set demo = {
-    "revenue_gbp": "12,480.50",
-    "bookings_count": 186,
-    "active_users": 73,
-    "cancellations": 14,
-    "booking_trend": [
-    {"label":"Mon","count":18},
-    {"label":"Tue","count":22},
-    {"label":"Wed","count":31},
-    {"label":"Thu","count":26},
-    {"label":"Fri","count":41},
-    {"label":"Sat","count":30},
-    {"label":"Sun","count":18}
-    ],
-    "top_cities": [
-    {"city":"London","count":54, "pct":72},
-    {"city":"Manchester","count":31, "pct":52},
-    {"city":"Edinburgh","count":24, "pct":44},
-    {"city":"Glasgow","count":19, "pct":38},
-    {"city":"Birmingham","count":15, "pct":31}
-    ],
-    "kpis": [
-    {"title":"Avg. Booking Value", "value":"£67.10", "hint":"Confirmed bookings"},
-    {"title":"Conversion Rate", "value":"3.8%", "hint":"Visits → bookings"},
-    {"title":"Peak City", "value":"London", "hint":"Most booked this period"},
-    {"title":"Refunded", "value":"£920.00", "hint":"Cancelled/refunded total"}
-    ]
-    } %}
-
-    {# Use demo values if missing OR zero #}
-    {% set revenue_val = revenue_gbp if revenue_gbp is defined and revenue_gbp and revenue_gbp != "0.00" else
-    demo.revenue_gbp %}
-    {% set bookings_val = bookings_count if bookings_count is defined and bookings_count and bookings_count != 0 else
-    demo.bookings_count %}
-    {% set active_val = active_users if active_users is defined and active_users and active_users != 0 else
-    demo.active_users %}
-    {% set cancels_val = cancellations if cancellations is defined and cancellations and cancellations != 0 else
-    demo.cancellations %}
-
-    {% set trend_rows = booking_trend if booking_trend is defined and booking_trend and booking_trend|length > 0 else
-    demo.booking_trend %}
-    {% set cities_rows = top_cities if top_cities is defined and top_cities and top_cities|length > 0 else
-    demo.top_cities %}
-    {% set kpi_rows = kpis if kpis is defined and kpis and kpis|length > 0 else demo.kpis %}
-
-    {# Scale bars relative to maximum (Fri=41 is max, so 100%) #}
-    {% set max_count = trend_rows | map(attribute='count') | max %}
-    {% set total_week = trend_rows | sum(attribute='count') %}
-
-    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
-      <div>
-        <h3 class="fw-bold mb-1">Analytics</h3>
-        <div class="text-muted">Quick insights into platform performance.</div>
-      </div>
-
-      <div class="d-flex gap-2 align-items-center">
-        <select class="form-select form-select-sm" style="max-width: 180px;">
-          <option selected>This week</option>
-          <option>This month</option>
-          <option>This year</option>
-        </select>
-
-        <a class="btn btn-outline-dark btn-sm" href="{{ url_for('admin_analytics') }}">
-          <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+    <aside class="admin-sidebar">
+      <div class="admin-brand">Admin Dashboard</div>
+      <nav class="admin-nav">
+        <a href="{{ url_for('admin_dashboard') }}" class="{% if endpoint == 'admin_dashboard' %}active{% endif %}">
+          <div class="admin-icon"><i class="bi bi-speedometer2"></i></div>
+          <div class="fw-semibold">Dashboard</div>
         </a>
-      </div>
-    </div>
+        <a href="{{ url_for('admin_reservations') }}"
+          class="{% if endpoint == 'admin_reservations' %}active{% endif %}">
+          <div class="admin-icon"><i class="bi bi-calendar-check"></i></div>
+          <div class="fw-semibold">Reservations</div>
+        </a>
+        <a href="{{ url_for('admin_rooms') }}" class="{% if endpoint == 'admin_rooms' %}active{% endif %}">
+          <div class="admin-icon"><i class="bi bi-door-open"></i></div>
+          <div class="fw-semibold">Rooms</div>
+        </a>
+        <a href="{{ url_for('admin_staffs') }}" class="{% if endpoint == 'admin_staffs' %}active{% endif %}">
+          <div class="admin-icon"><i class="bi bi-people"></i></div>
+          <div class="fw-semibold">Staffs</div>
+        </a>
+        <a href="{{ url_for('admin_analytics') }}" class="{% if endpoint == 'admin_analytics' %}active{% endif %}">
+          <div class="admin-icon"><i class="bi bi-bar-chart"></i></div>
+          <div class="fw-semibold">Analytics</div>
+        </a>
+        <a href="{{ url_for('admin_reports') }}" class="{% if endpoint == 'admin_reports' %}active{% endif %}">
+          <div class="admin-icon"><i class="bi bi-file-earmark-text"></i></div>
+          <div class="fw-semibold">Reports</div>
+        </a>
+        <a href="{{ url_for('admin_settings') }}" class="{% if endpoint == 'admin_settings' %}active{% endif %}">
+          <div class="admin-icon"><i class="bi bi-gear"></i></div>
+          <div class="fw-semibold">Settings</div>
+        </a>
+        <a href="{{ url_for('admin_users') }}" class="{% if endpoint == 'admin_users' %}active{% endif %}">
+          <div class="admin-icon"><i class="bi bi-person-badge"></i></div>
+          <div class="fw-semibold">Users</div>
+        </a>
+      </nav>
+    </aside>
 
-    {# KPI cards #}
-    <div class="row g-3 mb-3">
-      <div class="col-md-3">
-        <div class="card shadow-sm h-100">
-          <div class="card-body">
-            <div class="text-muted small">Revenue</div>
-            <div class="fw-bold fs-4">£{{ revenue_val }}</div>
-            <div class="text-muted small">Based on confirmed bookings</div>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card shadow-sm h-100">
-          <div class="card-body">
-            <div class="text-muted small">Bookings</div>
-            <div class="fw-bold fs-4">{{ bookings_val }}</div>
-            <div class="text-muted small">Total bookings</div>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card shadow-sm h-100">
-          <div class="card-body">
-            <div class="text-muted small">Active Users</div>
-            <div class="fw-bold fs-4">{{ active_val }}</div>
-            <div class="text-muted small">Customers + admins</div>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card shadow-sm h-100">
-          <div class="card-body">
-            <div class="text-muted small">Cancellations</div>
-            <div class="fw-bold fs-4">{{ cancels_val }}</div>
-            <div class="text-muted small">Cancelled bookings</div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <main class="admin-main">
+      {% include "admin/_admin_topbar.html" with context %}
 
-    {# Secondary KPI strip #}
-    <div class="row g-3 mb-3">
-      {% for k in kpi_rows %}
-      <div class="col-md-3">
-        <div class="card shadow-sm h-100">
-          <div class="card-body">
-            <div class="text-muted small">{{ k.title }}</div>
-            <div class="fw-bold fs-5">{{ k.value }}</div>
-            <div class="text-muted small">{{ k.hint }}</div>
+      {% set demo = {
+      "revenue_gbp": "12,480.50",
+      "bookings_count": 186,
+      "active_users": 73,
+      "cancellations": 14,
+      "booking_trend": [
+      {"label":"Mon","count":18},
+      {"label":"Tue","count":22},
+      {"label":"Wed","count":31},
+      {"label":"Thu","count":26},
+      {"label":"Fri","count":41},
+      {"label":"Sat","count":30},
+      {"label":"Sun","count":18}
+      ],
+      "top_cities": [
+      {"city":"London","count":54, "pct":72},
+      {"city":"Manchester","count":31, "pct":52},
+      {"city":"Edinburgh","count":24, "pct":44},
+      {"city":"Glasgow","count":19, "pct":38},
+      {"city":"Birmingham","count":15, "pct":31}
+      ],
+      "kpis": [
+      {"title":"Avg. Booking Value", "value":"£67.10", "hint":"Confirmed bookings"},
+      {"title":"Conversion Rate", "value":"3.8%", "hint":"Visits → bookings"},
+      {"title":"Peak City", "value":"London", "hint":"Most booked this period"},
+      {"title":"Refunded", "value":"£920.00", "hint":"Cancelled/refunded total"}
+      ]
+      } %}
+
+      {% set revenue_val = revenue_gbp if revenue_gbp is defined and revenue_gbp and revenue_gbp != "0.00" else
+      demo.revenue_gbp %}
+      {% set bookings_val = bookings_count if bookings_count is defined and bookings_count and bookings_count != 0 else
+      demo.bookings_count %}
+      {% set active_val = active_users if active_users is defined and active_users and active_users != 0 else
+      demo.active_users %}
+      {% set cancels_val = cancellations if cancellations is defined and cancellations and cancellations != 0 else
+      demo.cancellations %}
+
+      {% set trend_rows = booking_trend if booking_trend is defined and booking_trend and booking_trend|length > 0 else
+      demo.booking_trend %}
+      {% set cities_rows = top_cities if top_cities is defined and top_cities and top_cities|length > 0 else
+      demo.top_cities %}
+      {% set kpi_rows = kpis if kpis is defined and kpis and kpis|length > 0 else demo.kpis %}
+
+      {% set max_count = trend_rows | map(attribute='count') | max %}
+      {% set total_week = trend_rows | sum(attribute='count') %}
+
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+        <div>
+          <h3 class="fw-bold mb-1">Analytics</h3>
+          <div class="text-muted">Quick insights into platform performance.</div>
+        </div>
+
+        <div class="d-flex gap-2 align-items-center">
+          <select class="form-select form-select-sm" style="max-width: 180px;">
+            <option selected>This week</option>
+            <option>This month</option>
+            <option>This year</option>
+          </select>
+
+          <a class="btn btn-outline-dark btn-sm" href="{{ url_for('admin_analytics') }}">
+            <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+          </a>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-3">
+          <div class="card shadow-sm h-100">
+            <div class="card-body">
+              <div class="text-muted small">Revenue</div>
+              <div class="fw-bold fs-4">£{{ revenue_val }}</div>
+              <div class="text-muted small">Based on confirmed bookings</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card shadow-sm h-100">
+            <div class="card-body">
+              <div class="text-muted small">Bookings</div>
+              <div class="fw-bold fs-4">{{ bookings_val }}</div>
+              <div class="text-muted small">Total bookings</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card shadow-sm h-100">
+            <div class="card-body">
+              <div class="text-muted small">Active Users</div>
+              <div class="fw-bold fs-4">{{ active_val }}</div>
+              <div class="text-muted small">Customers + admins</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card shadow-sm h-100">
+            <div class="card-body">
+              <div class="text-muted small">Cancellations</div>
+              <div class="fw-bold fs-4">{{ cancels_val }}</div>
+              <div class="text-muted small">Cancelled bookings</div>
+            </div>
           </div>
         </div>
       </div>
-      {% endfor %}
-    </div>
 
-    <div class="row g-3 align-items-start">
-      {# Bookings trend #}
-      <div class="col-lg-7">
-        <div class="card shadow-sm">
-          <div class="card-header bg-white d-flex justify-content-between align-items-center">
-            <div class="fw-semibold">Bookings trend</div>
-            <span class="text-muted small">Last 7 days</span>
+      <div class="row g-3 mb-3">
+        {% for k in kpi_rows %}
+        <div class="col-md-3">
+          <div class="card shadow-sm h-100">
+            <div class="card-body">
+              <div class="text-muted small">{{ k.title }}</div>
+              <div class="fw-bold fs-5">{{ k.value }}</div>
+              <div class="text-muted small">{{ k.hint }}</div>
+            </div>
           </div>
+        </div>
+        {% endfor %}
+      </div>
 
-          <div class="card-body">
-            <div class="text-muted small mb-3">
-              A quick weekly snapshot. (Lightweight chart using HTML/CSS.)
+      <div class="row g-3 align-items-start">
+        <div class="col-lg-7">
+          <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+              <div class="fw-semibold">Bookings trend</div>
+              <span class="text-muted small">Last 7 days</span>
             </div>
 
-            <div class="d-flex flex-column gap-2">
-              {% for r in trend_rows %}
-              {% set pct = (r.count * 100 / max_count) %}
-              <div class="d-flex align-items-center gap-3">
-                <div class="text-muted small" style="width: 42px;">{{ r.label }}</div>
-                <div class="flex-grow-1">
-                  <div class="progress" style="height: 12px;">
-                    <div class="progress-bar" role="progressbar" style="width: {{ pct }}%;"></div>
+            <div class="card-body">
+              <div class="text-muted small mb-3">Lightweight trend chart (HTML/CSS).</div>
+
+              <div class="d-flex flex-column gap-2">
+                {% for r in trend_rows %}
+                {% set pct = (r.count * 100 / max_count) %}
+                <div class="d-flex align-items-center gap-3">
+                  <div class="text-muted small" style="width: 42px;">{{ r.label }}</div>
+                  <div class="flex-grow-1">
+                    <div class="progress" style="height: 12px;">
+                      <div class="progress-bar" role="progressbar" style="width: {{ pct }}%;"></div>
+                    </div>
+                  </div>
+                  <div class="fw-semibold small" style="width: 34px; text-align:right;">{{ r.count }}</div>
+                </div>
+                {% endfor %}
+              </div>
+
+              <hr class="my-4">
+
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <div class="p-3 border rounded-4">
+                    <div class="text-muted small">Best day</div>
+                    {% set best = trend_rows|sort(attribute='count')|last %}
+                    <div class="fw-bold">{{ best.label }}</div>
+                    <div class="text-muted small">{{ best.count }} bookings</div>
                   </div>
                 </div>
-                <div class="fw-semibold small" style="width: 34px; text-align:right;">{{ r.count }}</div>
-              </div>
-              {% endfor %}
-            </div>
-
-            <hr class="my-4">
-
-            <div class="row g-3">
-              <div class="col-md-6">
-                <div class="p-3 border rounded-4">
-                  <div class="text-muted small">Best day</div>
-                  {% set best = trend_rows|sort(attribute='count')|last %}
-                  <div class="fw-bold">{{ best.label }}</div>
-                  <div class="text-muted small">{{ best.count }} bookings</div>
+                <div class="col-md-6">
+                  <div class="p-3 border rounded-4">
+                    <div class="text-muted small">Total this week</div>
+                    <div class="fw-bold">{{ total_week }}</div>
+                    <div class="text-muted small">Bookings recorded</div>
+                  </div>
                 </div>
               </div>
-              <div class="col-md-6">
-                <div class="p-3 border rounded-4">
-                  <div class="text-muted small">Total this week</div>
-                  <div class="fw-bold">{{ total_week }}</div>
-                  <div class="text-muted small">Bookings recorded</div>
-                </div>
-              </div>
+
             </div>
-
-          </div>
-        </div>
-      </div>
-
-      {# Top cities + recent activity (scrollable so it stays compact) #}
-      <div class="col-lg-5">
-
-        <div class="card shadow-sm mb-3">
-          <div class="card-header bg-white d-flex justify-content-between align-items-center">
-            <div class="fw-semibold">Top cities</div>
-            <span class="text-muted small">By bookings</span>
-          </div>
-
-          <div class="card-body" style="max-height: 220px; overflow:auto;">
-            {% for c in cities_rows %}
-            <div
-              class="d-flex justify-content-between align-items-center py-2 {% if not loop.last %}border-bottom{% endif %}">
-              <div>
-                <div class="fw-semibold">{{ c.city }}</div>
-                <div class="text-muted small">{{ c.count }} bookings</div>
-              </div>
-              <div style="min-width: 120px;">
-                <div class="progress" style="height: 10px;">
-                  <div class="progress-bar" role="progressbar" style="width: {{ c.pct }}%;"></div>
-                </div>
-              </div>
-            </div>
-            {% endfor %}
           </div>
         </div>
 
-        <div class="card shadow-sm">
-          <div class="card-header bg-white d-flex justify-content-between align-items-center">
-            <div class="fw-semibold">Recent activity</div>
-            <span class="text-muted small">System</span>
-          </div>
+        <div class="col-lg-5">
+          <div class="card shadow-sm mb-3">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+              <div class="fw-semibold">Top cities</div>
+              <span class="text-muted small">By bookings</span>
+            </div>
 
-          {% set activity = [
-          {"icon":"bi-check-circle", "text":"Payment marked as PAID for booking WH4829017391", "time":"2h ago"},
-          {"icon":"bi-person-plus", "text":"New customer account created", "time":"5h ago"},
-          {"icon":"bi-x-circle", "text":"Booking cancelled (fee applied)", "time":"1d ago"},
-          {"icon":"bi-arrow-repeat", "text":"Exchange rates updated", "time":"2d ago"},
-          {"icon":"bi-shield-check", "text":"Security audit completed", "time":"3d ago"}
-          ] %}
-
-          <div class="card-body" style="max-height: 260px; overflow:auto;">
-            <div class="d-flex flex-column">
-              {% for a in activity %}
-              <div class="d-flex align-items-start gap-3 py-3 {% if not loop.last %}border-bottom{% endif %}">
-                <div class="rounded-circle border d-flex align-items-center justify-content-center"
-                  style="width:36px;height:36px;flex:0 0 auto;">
-                  <i class="bi {{ a.icon }}"></i>
+            <div class="card-body" style="max-height: 220px; overflow:auto;">
+              {% for c in cities_rows %}
+              <div
+                class="d-flex justify-content-between align-items-center py-2 {% if not loop.last %}border-bottom{% endif %}">
+                <div>
+                  <div class="fw-semibold">{{ c.city }}</div>
+                  <div class="text-muted small">{{ c.count }} bookings</div>
                 </div>
-                <div class="flex-grow-1" style="min-width:0;">
-                  <div class="fw-semibold text-break">{{ a.text }}</div>
-                  <div class="text-muted small">{{ a.time }}</div>
+                <div style="min-width: 120px;">
+                  <div class="progress" style="height: 10px;">
+                    <div class="progress-bar" role="progressbar" style="width: {{ c.pct }}%;"></div>
+                  </div>
                 </div>
               </div>
               {% endfor %}
             </div>
           </div>
 
+          <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+              <div class="fw-semibold">Recent activity</div>
+              <span class="text-muted small">System</span>
+            </div>
+
+            {% set activity = [
+            {"icon":"bi-check-circle", "text":"Payment marked as PAID for booking WH4829017391", "time":"2h ago"},
+            {"icon":"bi-person-plus", "text":"New customer account created", "time":"5h ago"},
+            {"icon":"bi-x-circle", "text":"Booking cancelled (fee applied)", "time":"1d ago"},
+            {"icon":"bi-arrow-repeat", "text":"Exchange rates updated", "time":"2d ago"},
+            {"icon":"bi-shield-check", "text":"Security audit completed", "time":"3d ago"}
+            ] %}
+
+            <div class="card-body" style="max-height: 260px; overflow:auto;">
+              <div class="d-flex flex-column">
+                {% for a in activity %}
+                <div class="d-flex align-items-start gap-3 py-3 {% if not loop.last %}border-bottom{% endif %}">
+                  <div class="rounded-circle border d-flex align-items-center justify-content-center"
+                    style="width:36px;height:36px;flex:0 0 auto;">
+                    <i class="bi {{ a.icon }}"></i>
+                  </div>
+                  <div class="flex-grow-1" style="min-width:0;">
+                    <div class="fw-semibold text-break">{{ a.text }}</div>
+                    <div class="text-muted small">{{ a.time }}</div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+
+          </div>
         </div>
 
       </div>
-    </div>
+    </main>
 
-  </main>
+  </div>
 </div>
 {% endblock %}

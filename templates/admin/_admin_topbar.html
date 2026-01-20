@@ -1,32 +1,28 @@
-{# Reusable topbar for ALL admin pages #}
+{# Reusable topbar for ALL admin pages (except admin_dashboard if you want) #}
 <div class="admin-topbar">
-  <div>
-    <h2 class="fw-bold mb-0">{{ title or "Admin" }}</h2>
+  <div class="admin-topbar-left">
+    <h2 class="fw-bold mb-0">Admin</h2>
     <div class="text-muted small">Welcome, {{ session.get('email') }}</div>
   </div>
 
-  <div class="d-flex align-items-center gap-3 flex-wrap justify-content-end" style="flex:1;">
-    <div class="admin-search position-relative">
+  <div class="admin-topbar-search">
+    <div class="admin-search">
       <i class="bi bi-search text-muted"></i>
       <input id="adminSearchInput" type="text" placeholder="Search cities, rooms, users..." autocomplete="off" />
-
-      <!-- dropdown results -->
-      <div id="adminSearchResults" class="admin-search-results d-none"></div>
-    </div>
-
-    <div class="top-icons">
-      <button class="icon-btn" type="button" title="Messages"><i class="bi bi-chat-dots"></i></button>
-      <button class="icon-btn" type="button" title="Notifications"><i class="bi bi-bell"></i></button>
+      <div id="adminSearchDropdown" class="admin-search-dd d-none"></div>
     </div>
   </div>
+
+  <div class="admin-topbar-right">
+    <button class="icon-btn" type="button" title="Messages"><i class="bi bi-chat-dots"></i></button>
+    <button class="icon-btn" type="button" title="Notifications"><i class="bi bi-bell"></i></button>
+  </div>
 </div>
-<div class="text-muted small mt-4 pb-3">
-  © 2025 WorldHotels Admin
-</div>
+
 <script>
   (function () {
     const input = document.getElementById("adminSearchInput");
-    const box = document.getElementById("adminSearchResults");
+    const box = document.getElementById("adminSearchDropdown");
     if (!input || !box) return;
 
     let t = null;
@@ -36,7 +32,8 @@
       box.innerHTML = "";
     }
 
-    function showBox() {
+    function showBox(html) {
+      box.innerHTML = html;
       box.classList.remove("d-none");
     }
 
@@ -48,33 +45,32 @@
 
     function renderGroup(title, items, kind) {
       if (!items || items.length === 0) return "";
-      let html = `<div class="as-group-title">${esc(title)}</div>`;
+      let html = `<div class="dd-title">${esc(title)}</div>`;
+
       items.forEach(it => {
         if (kind === "city") {
           html += `
-          <button type="button" class="as-item" data-kind="city" data-name="${esc(it.name)}">
-            <i class="bi bi-geo-alt me-2 text-muted"></i>
-            <span>${esc(it.name)}</span>
-          </button>`;
+            <div class="dd-item" data-kind="city" data-name="${esc(it.name)}">
+              <b>${esc(it.name)}</b>
+            </div>`;
         }
+
         if (kind === "room") {
           html += `
-          <button type="button" class="as-item" data-kind="room" data-code="${esc(it.code)}">
-            <i class="bi bi-door-open me-2 text-muted"></i>
-            <span class="fw-semibold">${esc(it.code)}</span>
-            <span class="text-muted ms-2 small">max guests: ${esc(it.max_guests)}</span>
-          </button>`;
+            <div class="dd-item" data-kind="room" data-code="${esc(it.code)}">
+              <b>${esc(it.code)}</b> <span class="dd-muted">• max ${esc(it.max_guests)}</span>
+            </div>`;
         }
+
         if (kind === "user") {
           const label = `${it.first_name || ""} ${it.last_name || ""}`.trim() || it.email;
           html += `
-          <button type="button" class="as-item" data-kind="user" data-q="${esc(it.email)}">
-            <i class="bi bi-person me-2 text-muted"></i>
-            <span>${esc(label)}</span>
-            <span class="text-muted ms-2 small">${esc(it.email)}</span>
-          </button>`;
+            <div class="dd-item" data-kind="user" data-q="${esc(it.email)}">
+              <b>${esc(label)}</b> <span class="dd-muted">• ${esc(it.email)} • ${esc(it.role || "")}</span>
+            </div>`;
         }
       });
+
       return html;
     }
 
@@ -88,7 +84,7 @@
       const q = input.value.trim();
       clearTimeout(t);
 
-      if (q.length < 1) { hideBox(); return; }
+      if (!q) { hideBox(); return; }
 
       t = setTimeout(async () => {
         try {
@@ -100,17 +96,15 @@
             renderGroup("Users", data.users, "user");
 
           if (!html) {
-            box.innerHTML = `<div class="as-empty">No results found.</div>`;
-            showBox();
+            showBox(`<div class="p-3 text-muted small">No results found.</div>`);
             return;
           }
 
-          box.innerHTML = html;
-          showBox();
+          showBox(html);
         } catch (e) {
           hideBox();
         }
-      }, 200);
+      }, 220);
     });
 
     // click outside closes
@@ -120,26 +114,27 @@
 
     // click a result
     box.addEventListener("click", (e) => {
-      const btn = e.target.closest(".as-item");
-      if (!btn) return;
+      const item = e.target.closest(".dd-item");
+      if (!item) return;
 
-      const kind = btn.dataset.kind;
+      const kind = item.dataset.kind;
 
-      // Cities + Rooms -> go to public hotels page with filters (reliable with your current routes)
       if (kind === "city") {
-        const name = btn.dataset.name || "";
+        const name = item.dataset.name || "";
         window.location.href = `{{ url_for('hotels') }}?city=${encodeURIComponent(name)}`;
       }
+
       if (kind === "room") {
-        const code = btn.dataset.code || "";
+        const code = item.dataset.code || "";
         window.location.href = `{{ url_for('hotels') }}?room=${encodeURIComponent(code)}`;
       }
 
-      // Users -> go to admin users page with search query
       if (kind === "user") {
-        const q = btn.dataset.q || "";
+        const q = item.dataset.q || "";
         window.location.href = `{{ url_for('admin_users') }}?q=${encodeURIComponent(q)}`;
       }
+
+      hideBox();
     });
 
     // Enter key behavior
@@ -148,7 +143,6 @@
         e.preventDefault();
         const q = input.value.trim();
         if (!q) return;
-        // Default: go to admin users search page (best place for admin searching)
         window.location.href = `{{ url_for('admin_users') }}?q=${encodeURIComponent(q)}`;
       }
       if (e.key === "Escape") hideBox();

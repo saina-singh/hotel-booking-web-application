@@ -1383,11 +1383,50 @@ def admin_reports():
         return redirect(url_for('login'))
     return render_template("admin/admin_reports.html")
 
-@app.route('/admin/settings')
+def get_setting(key, default=None):
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT setting_value FROM site_settings WHERE setting_key=%s LIMIT 1", (key,))
+    row = cursor.fetchone()
+    cursor.close()
+    return row["setting_value"] if row else default
+
+def set_setting(key, value):
+    cursor = db.cursor()
+    cursor.execute("""
+        INSERT INTO site_settings (setting_key, setting_value)
+        VALUES (%s, %s)
+        ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)
+    """, (key, value))
+    db.commit()
+    cursor.close()
+
+
+@app.route("/admin/settings", methods=["GET", "POST"])
 def admin_settings():
-    if not (session.get('loggedin') and session.get('role') == 'ADMIN'):
-        return redirect(url_for('login'))
-    return render_template("admin/admin_settings.html")
+    if not (session.get("loggedin") and session.get("role") == "ADMIN"):
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        site_name = (request.form.get("site_name") or "").strip()
+        base_currency = (request.form.get("base_currency") or "GBP").strip().upper()
+
+        allowed = {"GBP", "USD", "EUR", "NRS"}
+        if not site_name:
+            flash("Site name cannot be empty.", "danger")
+        elif base_currency not in allowed:
+            flash("Invalid currency selected.", "danger")
+        else:
+            set_setting("site_name", site_name)
+            set_setting("base_currency", base_currency)
+            flash("Settings saved successfully.", "success")
+
+        return redirect(url_for("admin_settings"))
+
+    settings = {
+        "site_name": get_setting("site_name", "World Hotels"),
+        "base_currency": get_setting("base_currency", "GBP"),
+    }
+    return render_template("admin/admin_settings.html", settings=settings)
 
 if __name__== '__main__':
     app.run(host="127.0.0.1", port=5000, debug=True)

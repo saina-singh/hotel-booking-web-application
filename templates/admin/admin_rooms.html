@@ -4,129 +4,151 @@
 {% endblock %}
 
 {% block body %}
-<div class="admin-layout">
+<div class="container admin-page py-4">
+  <div class="admin-shell">
 
-  <aside class="admin-sidebar">
-    <div class="admin-brand">Admin Dashboard</div>
-    <nav class="admin-nav">
-      <a href="{{ url_for('admin_dashboard') }}" class="{% if endpoint == 'admin_dashboard' %}active{% endif %}">
-        <div class="admin-icon"><i class="bi bi-speedometer2"></i></div>
-        <div class="fw-semibold">Dashboard</div>
-      </a>
-      <a href="{{ url_for('admin_reservations') }}" class="{% if endpoint == 'admin_reservations' %}active{% endif %}">
-        <div class="admin-icon"><i class="bi bi-calendar-check"></i></div>
-        <div class="fw-semibold">Reservations</div>
-      </a>
-      <a href="{{ url_for('admin_rooms') }}" class="{% if endpoint == 'admin_rooms' %}active{% endif %}">
-        <div class="admin-icon"><i class="bi bi-door-open"></i></div>
-        <div class="fw-semibold">Rooms</div>
-      </a>
-      <a href="{{ url_for('admin_staffs') }}" class="{% if endpoint == 'admin_staffs' %}active{% endif %}">
-        <div class="admin-icon"><i class="bi bi-people"></i></div>
-        <div class="fw-semibold">Staffs</div>
-      </a>
-      <a href="{{ url_for('admin_analytics') }}" class="{% if endpoint == 'admin_analytics' %}active{% endif %}">
-        <div class="admin-icon"><i class="bi bi-bar-chart"></i></div>
-        <div class="fw-semibold">Analytics</div>
-      </a>
-      <a href="{{ url_for('admin_reports') }}" class="{% if endpoint == 'admin_reports' %}active{% endif %}">
-        <div class="admin-icon"><i class="bi bi-file-earmark-text"></i></div>
-        <div class="fw-semibold">Reports</div>
-      </a>
-      <a href="{{ url_for('admin_settings') }}" class="{% if endpoint == 'admin_settings' %}active{% endif %}">
-        <div class="admin-icon"><i class="bi bi-gear"></i></div>
-        <div class="fw-semibold">Settings</div>
-      </a>
-      <a href="{{ url_for('admin_users') }}" class="{% if endpoint == 'admin_users' %}active{% endif %}">
-        <div class="admin-icon"><i class="bi bi-person-badge"></i></div>
-        <div class="fw-semibold">Users</div>
-      </a>
-    </nav>
-  </aside>
+    <aside class="admin-sidebar">
+      <div class="admin-brand">Admin Dashboard</div>
+      <nav class="admin-nav">
+        <a href="{{ url_for('admin_dashboard') }}" class="{% if endpoint == 'admin_dashboard' %}active{% endif %}">
+          <div class="admin-icon"><i class="bi bi-speedometer2"></i></div>
+          <div class="fw-semibold">Dashboard</div>
+        </a>
+        <a href="{{ url_for('admin_reservations') }}"
+          class="{% if endpoint == 'admin_reservations' %}active{% endif %}">
+          <div class="admin-icon"><i class="bi bi-calendar-check"></i></div>
+          <div class="fw-semibold">Reservations</div>
+        </a>
+        <a href="{{ url_for('admin_rooms') }}" class="{% if endpoint == 'admin_rooms' %}active{% endif %}">
+          <div class="admin-icon"><i class="bi bi-door-open"></i></div>
+          <div class="fw-semibold">Rooms</div>
+        </a>
+        <a href="{{ url_for('admin_staffs') }}" class="{% if endpoint == 'admin_staffs' %}active{% endif %}">
+          <div class="admin-icon"><i class="bi bi-people"></i></div>
+          <div class="fw-semibold">Staffs</div>
+        </a>
+        <a href="{{ url_for('admin_analytics') }}" class="{% if endpoint == 'admin_analytics' %}active{% endif %}">
+          <div class="admin-icon"><i class="bi bi-bar-chart"></i></div>
+          <div class="fw-semibold">Analytics</div>
+        </a>
+        <a href="{{ url_for('admin_reports') }}" class="{% if endpoint == 'admin_reports' %}active{% endif %}">
+          <div class="admin-icon"><i class="bi bi-file-earmark-text"></i></div>
+          <div class="fw-semibold">Reports</div>
+        </a>
+        <a href="{{ url_for('admin_settings') }}" class="{% if endpoint == 'admin_settings' %}active{% endif %}">
+          <div class="admin-icon"><i class="bi bi-gear"></i></div>
+          <div class="fw-semibold">Settings</div>
+        </a>
+        <a href="{{ url_for('admin_users') }}" class="{% if endpoint == 'admin_users' %}active{% endif %}">
+          <div class="admin-icon"><i class="bi bi-person-badge"></i></div>
+          <div class="fw-semibold">Users</div>
+        </a>
+      </nav>
+    </aside>
 
-  <main class="admin-main">
-    {% include "admin/_admin_topbar.html" with context %}
-    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
-      <div>
-        <h3 class="fw-bold mb-1">Rooms</h3>
-        <div class="text-muted">Overview of room types and capacity rules.</div>
+    <main class="admin-main">
+      {% include "admin/_admin_topbar.html" with context %}
+
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+        <div>
+          <h3 class="fw-bold mb-1">Rooms</h3>
+          <div class="text-muted">Overview of room types and capacity rules.</div>
+        </div>
       </div>
-    </div>
 
-    <div class="row g-3 mb-3">
-      <div class="col-md-4">
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <div class="text-muted small">Room Types</div>
-            <div class="fw-bold fs-4">{{ room_types_count|default(0) }}</div>
+      <div class="row g-3 mb-3">
+        <div class="col-md-4">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <div class="text-muted small">Room Types</div>
+              <div class="fw-bold fs-4">{{ room_types_count|default(0) }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <div class="text-muted small">Max Guests Supported</div>
+              <div class="fw-bold fs-4">{{ max_guests_supported|default(0) }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <div class="text-muted small">Inventory Entries</div>
+              <div class="fw-bold fs-4">{{ inventory_rows|default(0) }}</div>
+            </div>
           </div>
         </div>
       </div>
-      <div class="col-md-4">
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <div class="text-muted small">Max Guests Supported</div>
-            <div class="fw-bold fs-4">{{ max_guests_supported|default(0) }}</div>
+
+      {% set img_map = {
+      "STANDARD": "images/gallery/standard/room.jpg",
+      "DOUBLE": "images/gallery/double/room.jpg",
+      "FAMILY": "images/gallery/family/room.jpg",
+      "SINGLE": "images/gallery/single/room.jpg",
+      "DELUXE": "images/gallery/deluxe/room.jpg",
+      "SUITE": "images/gallery/suite/room.jpg",
+      "EXECUTIVE": "images/gallery/executive/room.jpg"
+      } %}
+
+      <div class="card shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <div class="fw-semibold">Room Types</div>
+          <div class="text-muted small">Base multipliers & guest rules</div>
+        </div>
+
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th class="ps-3" style="width:110px;">Photo</th>
+                  <th>Type</th>
+                  <th>Max Guests</th>
+                  <th>Base Multiplier</th>
+                  <th>2nd Guest Multiplier</th>
+                  <th class="text-end pe-3">Room Type ID</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {% if room_types and room_types|length > 0 %}
+                {% for r in room_types %}
+                {% set code = (r.code or "")|upper %}
+                {% set img_path = r.image_url if r.image_url is defined and r.image_url else img_map.get(code,
+                "images/gallery/standard/room.jpg") %}
+                <tr>
+                  <td class="ps-3">
+                    <img src="{{ url_for('static', filename=img_path) }}" alt="{{ r.code }} photo"
+                      style="width:92px;height:62px;object-fit:cover;border-radius:12px;border:1px solid rgba(0,0,0,.08);">
+                  </td>
+                  <td>
+                    <div class="fw-semibold">{{ r.code }}</div>
+                    <div class="text-muted small">Pricing based on Standard rate</div>
+                  </td>
+                  <td>{{ r.max_guests }}</td>
+                  <td>{{ r.base_multiplier }}</td>
+                  <td>{{ r.second_guest_multiplier }}</td>
+                  <td class="text-end pe-3 text-muted">{{ r.room_type_id }}</td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                  <td colspan="6" class="p-4 text-center">
+                    <div class="text-muted">No room types found.</div>
+                  </td>
+                </tr>
+                {% endif %}
+              </tbody>
+
+            </table>
           </div>
         </div>
       </div>
-      <div class="col-md-4">
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <div class="text-muted small">Inventory Entries</div>
-            <div class="fw-bold fs-4">{{ inventory_rows|default(0) }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <div class="card shadow-sm">
-      <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <div class="fw-semibold">Room Types</div>
-        <div class="text-muted small">Base multipliers & guest rules</div>
-      </div>
-
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table align-middle mb-0">
-            <thead class="table-light">
-              <tr>
-                <th class="ps-3">Type</th>
-                <th>Max Guests</th>
-                <th>Base Multiplier</th>
-                <th>2nd Guest Multiplier</th>
-                <th class="text-end pe-3">Room Type ID</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {% if room_types and room_types|length > 0 %}
-              {% for r in room_types %}
-              <tr>
-                <td class="ps-3">
-                  <div class="fw-semibold">{{ r.code }}</div>
-                  <div class="text-muted small">Pricing based on Standard rate</div>
-                </td>
-                <td>{{ r.max_guests }}</td>
-                <td>{{ r.base_multiplier }}</td>
-                <td>{{ r.second_guest_multiplier }}</td>
-                <td class="text-end pe-3 text-muted">{{ r.room_type_id }}</td>
-              </tr>
-              {% endfor %}
-              {% else %}
-              <tr>
-                <td colspan="5" class="p-4 text-center">
-                  <div class="text-muted">No room types found.</div>
-                </td>
-              </tr>
-              {% endif %}
-            </tbody>
-
-          </table>
-        </div>
-      </div>
-    </div>
-
-  </main>
+    </main>
+  </div>
 </div>
 {% endblock %}

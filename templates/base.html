@@ -190,6 +190,32 @@
   </script>
   {% endif %}
 
+  <script>
+    (function () {
+      // Get today's date in YYYY-MM-DD (local time)
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const dd = String(now.getDate()).padStart(2, "0");
+      const today = `${yyyy}-${mm}-${dd}`;
+
+      // Apply to ALL date inputs
+      document.querySelectorAll('input[type="date"]').forEach(input => {
+        // If no min already set, block past dates
+        if (!input.hasAttribute("min")) {
+          input.setAttribute("min", today);
+        }
+
+        // Extra safety: if value somehow becomes past, clear it
+        input.addEventListener("change", () => {
+          if (input.value && input.value < today) {
+            input.value = "";
+          }
+        });
+      });
+    })();
+  </script>
+
 </body>
 
 </html>

@@ -264,18 +264,22 @@ def login():
             session['user_id'] = user['user_id']
             session['email'] = user['email']
             session['role'] = user['role']
+            if not has_cookie_record(session["user_id"]):
+                pass
             session['profile_image'] = user.get('profile_image')
-            save_cookie_prefs(session["user_id"], 0, 0)
+
             flash("Logged in successfully!", "success")
 
             next_url = request.args.get("next")
             if next_url:
                 return redirect(next_url)
+
             return redirect(url_for('admin_dashboard' if user['role']=='ADMIN' else 'user_dashboard'))
 
         flash("Invalid email or password.", "danger")
 
     return render_template("login.html")
+
 
 @app.route('/admin/dashboard')
 def admin_dashboard():

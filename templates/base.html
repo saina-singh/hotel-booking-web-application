@@ -103,6 +103,19 @@
   {% block body %}{% endblock %}
 
   <hr>
+  {% if endpoint == 'about' %}
+  <div class="container mt-5">
+    <div class="alert alert-light border d-flex align-items-start gap-3 small text-muted">
+      <i class="bi bi-info-circle mt-1"></i>
+      <div>
+        <strong>Demo Project Notice:</strong>
+        World Hotels is an academic demonstration website created for educational purposes.
+        All hotel listings, pricing, images, reviews, and bookings displayed on this website are fictional
+        and do not represent real commercial services.
+      </div>
+    </div>
+  </div>
+  {% endif %}
   <footer class="text-center text-muted py-3">
     © 2026 WorldHotels.com — All Rights Reserved
     <span class="mx-2">•</span>

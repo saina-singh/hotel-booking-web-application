@@ -102,27 +102,38 @@
 
   {% block body %}{% endblock %}
 
-  <hr>
-  {% if endpoint == 'about' %}
-  <div class="container mt-5">
-    <div class="alert alert-light border d-flex align-items-start gap-3 small text-muted">
-      <i class="bi bi-info-circle mt-1"></i>
-      <div>
-        <strong>Demo Project Notice:</strong>
-        World Hotels is an academic demonstration website created for educational purposes.
-        All hotel listings, pricing, images, reviews, and bookings displayed on this website are fictional
-        and do not represent real commercial services.
+  {% if not session.get('hide_demo_notice') %}
+  <div class="container my-4" style="max-width:1100px;">
+    <div class="alert alert-light border shadow-sm rounded-4 d-flex gap-3 align-items-start mb-0">
+      <button class="btn btn-sm btn-outline-dark ms-auto" onclick="dismissDemoNotice()">Dismiss</button>
+      <div class="mt-1 text-muted">
+        <i class="bi bi-info-circle"></i>
+      </div>
+      <div class="small">
+        <span class="fw-semibold">Demo Project Notice:</span>
+        World Hotels is an academic demonstration website created for educational purposes. All hotel listings, pricing,
+        images, reviews, and booking data shown are fictional and do not represent real commercial services.
       </div>
     </div>
   </div>
   {% endif %}
+
+  <hr>
   <footer class="text-center text-muted py-3">
     © 2026 WorldHotels.com — All Rights Reserved
     <span class="mx-2">•</span>
+
     <a class="text-muted text-decoration-none" href="{{ url_for('cookies_settings') }}">
       Cookies
     </a>
+
+    <span class="mx-2">•</span>
+
+    <a class="text-muted text-decoration-none" href="{{ url_for('show_demo_notice') }}">
+      Demo Notice
+    </a>
   </footer>
+
 
   {% if session.get('loggedin') and show_cookie_banner %}
   <div id="cookieBanner" class="cookie-banner">
@@ -231,6 +242,13 @@
         });
       });
     })();
+  </script>
+
+  <script>
+    async function dismissDemoNotice() {
+      await fetch("/dismiss-demo-notice", { method: "POST" });
+      location.reload();
+    }
   </script>
 
 </body>

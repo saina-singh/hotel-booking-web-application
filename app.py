@@ -1568,5 +1568,15 @@ def admin_delete_booking(booking_id):
     flash("Booking deleted permanently (admin).", "success")
     return redirect(url_for("admin_reservations"))
 
+@app.route("/dismiss-demo-notice", methods=["POST"])
+def dismiss_demo_notice():
+    session["hide_demo_notice"] = True
+    return ("", 204)
+
+@app.route("/show-demo-notice")
+def show_demo_notice():
+    session.pop("hide_demo_notice", None)
+    return redirect(request.referrer or url_for("index"))
+
 if __name__== '__main__':
     app.run(host="127.0.0.1", port=5000, debug=True)

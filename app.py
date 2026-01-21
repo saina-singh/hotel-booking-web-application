@@ -8,7 +8,8 @@ from flask import flash, jsonify, send_file, abort
 from datetime import date
 from io import BytesIO
 from typing import Optional
-
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
 import os
 from werkzeug.utils import secure_filename
 
@@ -479,7 +480,6 @@ def profile():
         if not first_name or not last_name:
             msg = "First name and last name are required."
         else:
-            # --- handle optional profile image upload ---
             file = request.files.get("profile_image")
             new_filename = None
 
@@ -492,7 +492,6 @@ def profile():
                     save_path = os.path.join(app.config["UPLOAD_FOLDER"], new_filename)
                     file.save(save_path)
 
-            # --- update profile fields ---
             if new_filename:
                 cursor.execute("""
                     UPDATE users
@@ -663,7 +662,6 @@ def room_details(hotel_id, room_code):
     standard_rate = float(hotel["standard_peak_gbp"] if peak else hotel["standard_offpeak_gbp"])  # NEW
     room["nightly_from_gbp"] = round(standard_rate * float(room["base_multiplier"]), 2)
 
-    # (rest of your copy stays same)
     room_copy = {
         "SINGLE": {
             "title": "Perfect for solo travellers",
@@ -729,7 +727,6 @@ def book(hotel_id):
         return redirect(url_for('login', next=request.referrer or url_for('hotels')))
 
     try:
-        # ---------- form inputs ----------
         room_type_id  = int(request.form.get('room_type_id'))
         check_in_str  = request.form.get('check_in')
         check_out_str = request.form.get('check_out')
@@ -748,7 +745,6 @@ def book(hotel_id):
         check_in  = datetime.strptime(check_in_str, "%Y-%m-%d").date()
         check_out = datetime.strptime(check_out_str, "%Y-%m-%d").date()
 
-        # ---------- validations ----------
         today = date.today()
         if check_in < today:
             return "Check-in cannot be in the past.", 400
@@ -764,7 +760,6 @@ def book(hotel_id):
 
         cursor = db.cursor()
 
-        # ---------- create booking ----------
         args = [
             int(session['user_id']),
             int(hotel_id),
@@ -781,7 +776,6 @@ def book(hotel_id):
 
         booking_id = result[5]
 
-        # ---------- add room ----------
         cursor.callproc("sp_add_booking_room", [
             int(booking_id),
             int(room_type_id),
@@ -792,13 +786,11 @@ def book(hotel_id):
         for r in cursor.stored_results():
             r.fetchall()
 
-        # ---------- confirm booking ----------
         cursor.execute(
             "UPDATE bookings SET booking_status='CONFIRMED' WHERE booking_id=%s",
             (booking_id,)
         )
 
-        # ---------- mark payment paid ----------
         cursor.execute(
             """
             UPDATE payments
@@ -1082,10 +1074,6 @@ def receipt_pdf(booking_id):
     if session.get("role") != "ADMIN" and r["email"] != session.get("email"):
         return "Not allowed", 403
 
-    # --- build PDF ---
-    from reportlab.lib.pagesizes import A4
-    from reportlab.pdfgen import canvas
-
     buf = BytesIO()
     c = canvas.Canvas(buf, pagesize=A4)
     width, height = A4
@@ -1227,7 +1215,6 @@ def admin_users_toggle(user_id):
     if not (session.get("loggedin") and session.get("role") == "ADMIN"):
         return redirect(url_for("login"))
 
-    # Prevent admin from deactivating themselves
     if user_id == session.get("user_id"):
         flash("You cannot deactivate your own account.", "warning")
         return redirect(url_for("admin_users"))
@@ -1259,7 +1246,6 @@ def admin_users_delete(user_id):
         cursor.close()
         flash("User deleted.", "success")
     except Exception as e:
-        # Usually fails if the user has bookings
         flash(f"Cannot delete this user (they may have bookings). Deactivate instead. ({e})", "warning")
 
     return redirect(url_for("admin_users"))
@@ -1366,7 +1352,6 @@ def admin_reservations():
     cursor.execute(base_sql, params)
     bookings = cursor.fetchall()
 
-    # counts
     cursor.execute("SELECT COUNT(*) AS n FROM bookings")
     total_bookings = cursor.fetchone()["n"]
     cursor.execute("SELECT COUNT(*) AS n FROM bookings WHERE booking_status='CONFIRMED'")
@@ -1527,12 +1512,10 @@ def parse_checkin_arg(checkin_str: Optional[str]):
         return None
 
 def is_peak_season(d: date):
-    # Peak: April–August, November–December (based on CHECK-IN month)
     return (4 <= d.month <= 8) or (d.month in (11, 12))
 
 def is_peak_from_checkin(checkin_str: Optional[str]) -> bool:
     if not checkin_str:
-        # fallback to today if no checkin passed
         m = date.today().month
         return (4 <= m <= 8) or (m in (11, 12))
 
@@ -1553,13 +1536,11 @@ def resolve_season(checkin_str: Optional[str], season_override: str) -> bool:
 
 @app.route("/admin/bookings/<int:booking_id>/cancel", methods=["POST"])
 def admin_cancel_booking(booking_id):
-    # admin-only
     if not (session.get("loggedin") and session.get("role") == "ADMIN"):
         return redirect(url_for("login"))
 
     cursor = db.cursor()
 
-    # only cancel if it exists and isn't already cancelled
     cursor.execute("""
         UPDATE bookings
         SET booking_status = 'CANCELLED'
@@ -1570,18 +1551,15 @@ def admin_cancel_booking(booking_id):
     cursor.close()
 
     flash("Booking cancelled (admin).", "success")
-    return redirect(url_for("admin_reservations"))  # change to your endpoint name
+    return redirect(url_for("admin_reservations"))  
 
 
 @app.route("/admin/bookings/<int:booking_id>/delete", methods=["POST"])
 def admin_delete_booking(booking_id):
-    # admin-only
     if not (session.get("loggedin") and session.get("role") == "ADMIN"):
         return redirect(url_for("login"))
 
     cursor = db.cursor()
-
-    # delete booking row
     cursor.execute("DELETE FROM bookings WHERE booking_id = %s", (booking_id,))
     db.commit()
 

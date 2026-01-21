@@ -55,6 +55,7 @@ Define rows FIRST (so KPI cards work)
 
 <div class="container admin-page py-4">
   <div class="admin-shell">
+
     <!-- SIDEBAR -->
     <aside class="admin-sidebar">
       <div class="admin-brand">Admin Dashboard</div>
@@ -106,7 +107,6 @@ Define rows FIRST (so KPI cards work)
     <!-- MAIN -->
     <main class="admin-main">
 
-      <!-- TOPBAR (wrapped so icons don't shift) -->
       <div class="admin-topbar-wrap">
         {% include "admin/_admin_topbar.html" with context %}
       </div>
@@ -166,6 +166,7 @@ Define rows FIRST (so KPI cards work)
                   <th>Total (GBP)</th>
                   <th>Status</th>
                   <th class="text-end pe-3">Created</th>
+                  <th class="pe-3">Action</th>
                 </tr>
               </thead>
 
@@ -205,6 +206,27 @@ Define rows FIRST (so KPI cards work)
                   </td>
 
                   <td class="text-end pe-3 text-muted small">{{ b.created_at }}</td>
+
+                  <td class="pe-3" style="width:220px;">
+                    <div class="d-flex gap-2 justify-content-end">
+                      {% if b.booking_status != 'CANCELLED' %}
+                      <form method="POST" action="{{ url_for('admin_cancel_booking', booking_id=b.booking_id) }}">
+                        <button class="btn btn-outline-danger btn-sm"
+                          onclick="return confirm('Cancel this booking as admin?')">
+                          Cancel
+                        </button>
+                      </form>
+                      {% endif %}
+
+                      <form method="POST" action="{{ url_for('admin_delete_booking', booking_id=b.booking_id) }}">
+                        <button class="btn btn-outline-dark btn-sm"
+                          onclick="return confirm('Delete permanently? This cannot be undone.')">
+                          Delete
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+
                 </tr>
                 {% endfor %}
               </tbody>

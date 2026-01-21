@@ -4,7 +4,7 @@ from itsdangerous import URLSafeTimedSerializer
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
-from flask import flash, jsonify, send_file
+from flask import flash, jsonify, send_file, abort
 from datetime import date
 from io import BytesIO
 from typing import Optional
@@ -1550,6 +1550,45 @@ def resolve_season(checkin_str: Optional[str], season_override: str) -> bool:
     if season_override == "off_peak":
         return False
     return is_peak_from_checkin(checkin_str)
+
+@app.route("/admin/bookings/<int:booking_id>/cancel", methods=["POST"])
+def admin_cancel_booking(booking_id):
+    # admin-only
+    if not (session.get("loggedin") and session.get("role") == "ADMIN"):
+        return redirect(url_for("login"))
+
+    cursor = db.cursor()
+
+    # only cancel if it exists and isn't already cancelled
+    cursor.execute("""
+        UPDATE bookings
+        SET booking_status = 'CANCELLED'
+        WHERE booking_id = %s AND booking_status <> 'CANCELLED'
+    """, (booking_id,))
+    db.commit()
+
+    cursor.close()
+
+    flash("Booking cancelled (admin).", "success")
+    return redirect(url_for("admin_reservations"))  # change to your endpoint name
+
+
+@app.route("/admin/bookings/<int:booking_id>/delete", methods=["POST"])
+def admin_delete_booking(booking_id):
+    # admin-only
+    if not (session.get("loggedin") and session.get("role") == "ADMIN"):
+        return redirect(url_for("login"))
+
+    cursor = db.cursor()
+
+    # delete booking row
+    cursor.execute("DELETE FROM bookings WHERE booking_id = %s", (booking_id,))
+    db.commit()
+
+    cursor.close()
+
+    flash("Booking deleted permanently (admin).", "success")
+    return redirect(url_for("admin_reservations"))
 
 if __name__== '__main__':
     app.run(host="127.0.0.1", port=5000, debug=True)

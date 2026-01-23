@@ -1,8 +1,4 @@
-CREATE DATABASE worldhotels
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_0900_ai_ci;
-
-USE worldhotels;
+USE sacstrsx_24071247;
 
 -- ---------- USERS ----------
 -- End users + admin users
@@ -792,6 +788,8 @@ JOIN features f    ON f.feature_id = rtf.feature_id
 GROUP BY h.hotel_name, c.name, rt.code
 ORDER BY c.name, rt.code;
 
+SET SQL_SAFE_UPDATES = 0;
+
 UPDATE hotels h
 JOIN cities c ON c.city_id = h.city_id
 SET h.address = CASE c.name
@@ -815,6 +813,30 @@ SET h.address = CASE c.name
 END
 WHERE h.hotel_id > 0;
 
+UPDATE hotels h
+JOIN cities c ON c.city_id = h.city_id
+SET h.address = CASE c.name
+  WHEN 'Aberdeen'     THEN 'Union Square, Guild St, Aberdeen AB11 5RG, UK'
+  WHEN 'Belfast'      THEN 'Donegall Place, Belfast BT1 5AD, UK'
+  WHEN 'Birmingham'   THEN 'Broad Street, Birmingham B1 2HF, UK'
+  WHEN 'Bristol'      THEN 'College Green, Bristol BS1 5TR, UK'
+  WHEN 'Cardiff'      THEN 'St Mary Street, Cardiff CF10 1AD, UK'
+  WHEN 'Edinburgh'    THEN 'Royal Mile, Edinburgh EH1 1QS, UK'
+  WHEN 'Glasgow'      THEN 'George Square, Glasgow G2 1DU, UK'
+  WHEN 'London'       THEN 'Westminster Bridge Rd, London SE1 7UT, UK'
+  WHEN 'Manchester'   THEN 'Deansgate, Manchester M3 4EN, UK'
+  WHEN 'New Castle'   THEN 'Grey Street, Newcastle upon Tyne NE1 6EE, UK'
+  WHEN 'Norwich'      THEN 'Gentlemans Walk, Norwich NR2 1NA, UK'
+  WHEN 'Nottingham'   THEN 'Old Market Square, Nottingham NG1 2DT, UK'
+  WHEN 'Oxford'       THEN 'Broad Street, Oxford OX1 3AZ, UK'
+  WHEN 'Plymouth'     THEN 'Royal Parade, Plymouth PL1 1DS, UK'
+  WHEN 'Swansea'      THEN 'Princess Way, Swansea SA1 3AF, UK'
+  WHEN 'Bournemouth'  THEN 'West Cliff Rd, Bournemouth BH2 5PH, UK'
+  WHEN 'Kent'         THEN 'High Street, Canterbury, Kent CT1 2JS, UK'
+END
+WHERE h.hotel_id > 0;
+
+SET SQL_SAFE_UPDATES = 1;
 
 SELECT h.hotel_name, c.name AS city, h.address
 FROM hotels h
@@ -822,10 +844,6 @@ JOIN cities c ON c.city_id = h.city_id
 ORDER BY c.name;
 
 SELECT hotel_id, address FROM hotels ORDER BY hotel_id;
-
-SELECT room_type_id, code
-FROM room_types
-ORDER BY room_type_id;
 
 INSERT IGNORE INTO features (name)
 VALUES ('Wifi'), ('TV'), ('Breakfast'), ('Mini-bar');
@@ -897,4 +915,67 @@ VALUES
   ('base_currency', 'GBP')
 ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value);
 
+ # This query shows how users are stored.
+SELECT * FROM users;
+
+# Every booking created on the website is stored here. The booking code is generated automatically.
+SELECT booking_id, booking_code, user_id, hotel_id, booking_status, total_gbp
+FROM bookings
+ORDER BY booking_id DESC; 
+
+# Room types are not stored directly in bookings. They are linked using foreign keys, which is part of normalization.
+SELECT b.booking_code, rt.code AS room_type, br.rooms_qty, br.guests
+FROM booking_rooms br
+JOIN bookings b ON b.booking_id = br.booking_id
+JOIN room_types rt ON rt.room_type_id = br.room_type_id;
+
+# City names are stored only once in the cities table to remove transitive dependency.
+SELECT * FROM cities;
+
+# Hotels store only city_id, not city names. This prevents data duplication and update anomalies.
+SELECT h.hotel_name, c.name AS city
+FROM hotels h
+JOIN cities c ON h.city_id = c.city_id;
+
+# Room type information is stored separately, which removes partial dependency and supports Second and Third Normal Form.
+SELECT room_type_id, code, max_guests, base_multiplier
+FROM room_types;
+
+# Features are separated into their own table to avoid repeating columns like WiFi, TV, Breakfast.
+SELECT rt.code, GROUP_CONCAT(f.name) AS features
+FROM room_type_features rtf
+JOIN room_types rt ON rt.room_type_id = rtf.room_type_id
+JOIN features f ON f.feature_id = rtf.feature_id
+GROUP BY rt.code;
+
+# This procedure handles booking creation, pricing rules, and discount calculation inside the database.
+SHOW CREATE PROCEDURE sp_create_booking;
+
+# Triggers enforce business rules like maximum stay length and booking limits
+SHOW TRIGGERS;
+
+SELECT user_id, email, role
+FROM users
+WHERE email IN ('singhsaina11@gmail.com', 'singhsaina246@gmail.com');
+
+INSERT INTO users (
+  user_id, role, first_name, last_name, email, phone,
+  password_hash, is_active, created_at, updated_at, profile_image
+)
+VALUES (
+  1, 'ADMIN', 'Saina', 'Singh', 'singhsaina11@gmail.com', '9823699349',
+  'pbkdf2:sha256:1000000$dc9g0dkw0CsO9bJw$910bf67002c3875601f8732f09ee560028e743d64f0a7311a695cfc14ca93fad',
+  1, '2025-12-29 11:59:56', '2026-01-01 23:50:19', 'user_2.png'
+);
+
+INSERT INTO users (role, first_name, last_name, email, phone, password_hash, is_active)
+VALUES (
+  'CUSTOMER',
+  'Saina',
+  'Singh',
+  'singhsaina246@gmail.com',
+  '9767661362',
+  'pbkdf2:sha256:1000000$Mdz1lk8SJJAz7IFD$635f23d1db0218523abe818412975eab499840a134febf25595f1bda161c8a85',
+  1
+);
 

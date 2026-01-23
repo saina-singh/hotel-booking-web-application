@@ -29,13 +29,17 @@ app.secret_key='secret123'
 #token generator
 serializer=URLSafeTimedSerializer(app.secret_key)
 import mysql.connector
-db=mysql.connector.connect(
-    host='localhost',
-    user='root',
-    password='sainasingh',
-    database='worldhotels',
-    port=3306
+db = mysql.connector.connect(
+    host=os.getenv("DB_HOST", "localhost"),
+    user=os.getenv("DB_USER", "root"),
+    password=os.getenv("DB_PASSWORD", ""),
+    database=os.getenv("DB_NAME", "worldhotels"),
+    port=int(os.getenv("DB_PORT", "3306"))
 )
+
+print("DB HOST:", os.getenv("DB_HOST"))
+print("DB USER:", os.getenv("DB_USER"))
+print("DB NAME:", os.getenv("DB_NAME"))
 
 def get_cookie_prefs(user_id):
     cursor = db.cursor(dictionary=True)
@@ -1578,5 +1582,13 @@ def show_demo_notice():
     session.pop("hide_demo_notice", None)
     return redirect(request.referrer or url_for("index"))
 
+@app.route("/db-test")
+def db_test():
+    cur = db.cursor()
+    cur.execute("SELECT DATABASE(), @@hostname, @@port")
+    row = cur.fetchone()
+    cur.close()
+    return f"Connected to DB={row[0]}, host={row[1]}, port={row[2]}"
+
 if __name__== '__main__':
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    app.run(debug=True)

@@ -30,16 +30,12 @@ app.secret_key='secret123'
 serializer=URLSafeTimedSerializer(app.secret_key)
 import mysql.connector
 db = mysql.connector.connect(
-    host=os.getenv("DB_HOST", "localhost"),
-    user=os.getenv("DB_USER", "root"),
-    password=os.getenv("DB_PASSWORD", ""),
-    database=os.getenv("DB_NAME", "worldhotels"),
-    port=int(os.getenv("DB_PORT", "3306"))
+    host="103.191.208.50",
+    user="sacstrsx_24071247",
+    password="K?)hCk#});~${P15",
+    database="sacstrsx_24071247",
+    port=3306
 )
-
-print("DB HOST:", os.getenv("DB_HOST"))
-print("DB USER:", os.getenv("DB_USER"))
-print("DB NAME:", os.getenv("DB_NAME"))
 
 def get_cookie_prefs(user_id):
     cursor = db.cursor(dictionary=True)

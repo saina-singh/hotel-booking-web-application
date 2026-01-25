@@ -24,6 +24,8 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+BASE_URL = 'https://24071247.tbcstudentserver.com/'
+
 #secret key
 app.secret_key='secret123'
 #token generator

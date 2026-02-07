@@ -48,68 +48,63 @@
     </div>
   </div>
 
-  {# -------------------------
-  GALLERY ITEMS (your exact files)
-  static/images/gallery/<roomtype>/<image>.jpg
-      ------------------------- #}
-      {% set gallery_items = [
-      {"room":"standard","type":"room","label":"Standard • Room","src":"images/gallery/standard/room.jpg"},
-      {"room":"standard","type":"bathroom","label":"Standard • Bathroom","src":"images/gallery/standard/bathroom.jpg"},
+  {% set gallery_items = [
+  {"room":"standard","type":"room","label":"Standard • Room","src":"images/gallery/standard/room.jpg"},
+  {"room":"standard","type":"bathroom","label":"Standard • Bathroom","src":"images/gallery/standard/bathroom.jpg"},
 
-      {"room":"single","type":"room","label":"Single • Room","src":"images/gallery/single/room.jpg"},
-      {"room":"single","type":"bathroom","label":"Single • Bathroom","src":"images/gallery/single/bathroom.jpg"},
-      {"room":"single","type":"minibar","label":"Single • Mini-bar","src":"images/gallery/single/minibar.jpg"},
+  {"room":"single","type":"room","label":"Single • Room","src":"images/gallery/single/room.jpg"},
+  {"room":"single","type":"bathroom","label":"Single • Bathroom","src":"images/gallery/single/bathroom.jpg"},
+  {"room":"single","type":"minibar","label":"Single • Mini-bar","src":"images/gallery/single/minibar.jpg"},
 
-      {"room":"family","type":"room","label":"Family • Room","src":"images/gallery/family/room.jpg"},
-      {"room":"family","type":"bathroom","label":"Family • Bathroom","src":"images/gallery/family/bathroom.jpg"},
-      {"room":"family","type":"balcony","label":"Family • Balcony","src":"images/gallery/family/balcony.jpg"},
+  {"room":"family","type":"room","label":"Family • Room","src":"images/gallery/family/room.jpg"},
+  {"room":"family","type":"bathroom","label":"Family • Bathroom","src":"images/gallery/family/bathroom.jpg"},
+  {"room":"family","type":"balcony","label":"Family • Balcony","src":"images/gallery/family/balcony.jpg"},
 
-      {"room":"double","type":"room","label":"Double • Room","src":"images/gallery/double/room.jpg"},
-      {"room":"double","type":"bathroom","label":"Double • Bathroom","src":"images/gallery/double/bathroom.jpg"},
-      {"room":"double","type":"balcony","label":"Double • Balcony","src":"images/gallery/double/balcony.jpg"},
-      {"room":"double","type":"minibar","label":"Double • Mini-bar","src":"images/gallery/double/minibar.jpg"},
+  {"room":"double","type":"room","label":"Double • Room","src":"images/gallery/double/room.jpg"},
+  {"room":"double","type":"bathroom","label":"Double • Bathroom","src":"images/gallery/double/bathroom.jpg"},
+  {"room":"double","type":"balcony","label":"Double • Balcony","src":"images/gallery/double/balcony.jpg"},
+  {"room":"double","type":"minibar","label":"Double • Mini-bar","src":"images/gallery/double/minibar.jpg"},
 
-      {"room":"deluxe","type":"room","label":"Deluxe • Room","src":"images/gallery/deluxe/room.jpg"},
-      {"room":"deluxe","type":"bathroom","label":"Deluxe • Bathroom","src":"images/gallery/deluxe/bathroom.jpg"},
-      {"room":"deluxe","type":"balcony","label":"Deluxe • Balcony","src":"images/gallery/deluxe/balcony.jpg"},
-      {"room":"deluxe","type":"minibar","label":"Deluxe • Mini-bar","src":"images/gallery/deluxe/minibar.jpg"},
+  {"room":"deluxe","type":"room","label":"Deluxe • Room","src":"images/gallery/deluxe/room.jpg"},
+  {"room":"deluxe","type":"bathroom","label":"Deluxe • Bathroom","src":"images/gallery/deluxe/bathroom.jpg"},
+  {"room":"deluxe","type":"balcony","label":"Deluxe • Balcony","src":"images/gallery/deluxe/balcony.jpg"},
+  {"room":"deluxe","type":"minibar","label":"Deluxe • Mini-bar","src":"images/gallery/deluxe/minibar.jpg"},
 
-      {"room":"executive","type":"room","label":"Executive • Room","src":"images/gallery/executive/room.jpg"},
-      {"room":"executive","type":"bathroom","label":"Executive •
-      Bathroom","src":"images/gallery/executive/bathroom.jpg"},
-      {"room":"executive","type":"balcony","label":"Executive • Balcony","src":"images/gallery/executive/balcony.jpg"},
-      {"room":"executive","type":"minibar","label":"Executive • Mini-bar","src":"images/gallery/executive/minibar.jpg"},
-      {"room":"executive","type":"gym","label":"Executive • Gym","src":"images/gallery/executive/gym.jpg"},
+  {"room":"executive","type":"room","label":"Executive • Room","src":"images/gallery/executive/room.jpg"},
+  {"room":"executive","type":"bathroom","label":"Executive •
+  Bathroom","src":"images/gallery/executive/bathroom.jpg"},
+  {"room":"executive","type":"balcony","label":"Executive • Balcony","src":"images/gallery/executive/balcony.jpg"},
+  {"room":"executive","type":"minibar","label":"Executive • Mini-bar","src":"images/gallery/executive/minibar.jpg"},
+  {"room":"executive","type":"gym","label":"Executive • Gym","src":"images/gallery/executive/gym.jpg"},
 
-      {"room":"suite","type":"room","label":"Suite • Room","src":"images/gallery/suite/room.jpg"},
-      {"room":"suite","type":"bathroom","label":"Suite • Bathroom","src":"images/gallery/suite/bathroom.jpg"},
-      {"room":"suite","type":"balcony","label":"Suite • Balcony","src":"images/gallery/suite/balcony.jpg"},
-      {"room":"suite","type":"minibar","label":"Suite • Mini-bar","src":"images/gallery/suite/minibar.jpg"},
-      {"room":"suite","type":"pool","label":"Suite • Pool","src":"images/gallery/suite/pool.jpg"},
-      ] %}
+  {"room":"suite","type":"room","label":"Suite • Room","src":"images/gallery/suite/room.jpg"},
+  {"room":"suite","type":"bathroom","label":"Suite • Bathroom","src":"images/gallery/suite/bathroom.jpg"},
+  {"room":"suite","type":"balcony","label":"Suite • Balcony","src":"images/gallery/suite/balcony.jpg"},
+  {"room":"suite","type":"minibar","label":"Suite • Mini-bar","src":"images/gallery/suite/minibar.jpg"},
+  {"room":"suite","type":"pool","label":"Suite • Pool","src":"images/gallery/suite/pool.jpg"},
+  ] %}
 
-      <div class="row g-4" id="galleryGrid">
-        {% for img in gallery_items %}
-        <div class="col-md-4 col-lg-3 gallery-item" data-room="{{ img.room }}" data-type="{{ img.type }}"
-          data-label="{{ img.label|lower }}">
-          <div class="card shadow-sm h-100">
-            <img src="{{ url_for('static', filename=img.src) }}" class="card-img-top"
-              style="height: 190px; object-fit: cover; cursor:pointer;" alt="{{ img.label }}" data-bs-toggle="modal"
-              data-bs-target="#imgModal" data-full="{{ url_for('static', filename=img.src) }}"
-              data-title="{{ img.label }}">
-            <div class="card-body">
-              <div class="fw-bold">{{ img.label }}</div>
-              <div class="mt-2 d-flex gap-2 flex-wrap">
-                <span class="badge bg-dark text-uppercase">{{ img.room }}</span>
-                <span class="badge bg-secondary text-uppercase">{{ img.type }}</span>
-              </div>
-            </div>
+  <div class="row g-4" id="galleryGrid">
+    {% for img in gallery_items %}
+    <div class="col-md-4 col-lg-3 gallery-item" data-room="{{ img.room }}" data-type="{{ img.type }}"
+      data-label="{{ img.label|lower }}">
+      <div class="card shadow-sm h-100">
+        <img src="{{ url_for('static', filename=img.src) }}" class="card-img-top"
+          style="height: 190px; object-fit: cover; cursor:pointer;" alt="{{ img.label }}" data-bs-toggle="modal"
+          data-bs-target="#imgModal" data-full="{{ url_for('static', filename=img.src) }}" data-title="{{ img.label }}">
+        <div class="card-body">
+          <div class="fw-bold">{{ img.label }}</div>
+          <div class="mt-2 d-flex gap-2 flex-wrap">
+            <span class="badge bg-dark text-uppercase">{{ img.room }}</span>
+            <span class="badge bg-secondary text-uppercase">{{ img.type }}</span>
           </div>
         </div>
-        {% endfor %}
       </div>
+    </div>
+    {% endfor %}
+  </div>
 
-      <p class="text-muted mt-3 d-none" id="noResults">No images match your filters.</p>
+  <p class="text-muted mt-3 d-none" id="noResults">No images match your filters.</p>
 
 </div>
 

@@ -3,6 +3,7 @@ from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import date, datetime, timedelta
+import mysql.connector
 from dateutil.relativedelta import relativedelta
 from flask import flash, jsonify, send_file, abort
 from datetime import date
@@ -12,6 +13,9 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 import os
 from werkzeug.utils import secure_filename
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__, template_folder='templates', static_folder='static', static_url_path='/')
 UPLOAD_FOLDER = os.path.join(app.root_path, "static", "uploads", "profiles")
@@ -30,16 +34,20 @@ BASE_URL = 'https://24071247.tbcstudentserver.com/'
 app.secret_key='secret123'
 #token generator
 serializer=URLSafeTimedSerializer(app.secret_key)
-import mysql.connector
-db = mysql.connector.connect(
-    host="103.191.208.50",
-    user="sacstrsx_24071247",
-    password="K?)hCk#});~${P15",
-    database="sacstrsx_24071247",
-    port=3306
-)
+
+db_config = {
+    "host": os.getenv("DB_HOST"),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "database": os.getenv("DB_NAME"),
+    "port": int(os.getenv("DB_PORT", 3306))
+}
+
+def get_db():
+    return mysql.connector.connect(**db_config)
 
 def get_cookie_prefs(user_id):
+    db = get_db()
     cursor = db.cursor(dictionary=True)
     cursor.execute("""
         SELECT necessary, analytics, marketing
@@ -49,6 +57,7 @@ def get_cookie_prefs(user_id):
     """, (user_id,))
     prefs = cursor.fetchone()
     cursor.close()
+    db.close()
 
     # default if no record yet
     if not prefs:
@@ -62,6 +71,7 @@ def get_cookie_prefs(user_id):
     }
 
 def save_cookie_prefs(user_id, analytics, marketing):
+    db = get_db()
     cursor = db.cursor()
     cursor.execute("""
         INSERT INTO cookie_preferences (user_id, necessary, analytics, marketing)
@@ -73,6 +83,7 @@ def save_cookie_prefs(user_id, analytics, marketing):
     """, (user_id, int(analytics), int(marketing)))
     db.commit()
     cursor.close()
+    db.close()
 
 @app.route("/cookies", methods=["GET", "POST"])
 def cookies_settings():
@@ -111,10 +122,12 @@ def cookies_quick():
     return jsonify({"ok": True})
 
 def has_cookie_record(user_id):
+    db = get_db()
     cursor = db.cursor()
     cursor.execute("SELECT 1 FROM cookie_preferences WHERE user_id=%s LIMIT 1", (user_id,))
     row = cursor.fetchone()
     cursor.close()
+    db.close()
     return bool(row)
 
 @app.after_request
@@ -143,23 +156,17 @@ def inject_endpoint():
 #default route
 @app.route('/')
 def index():
+    db = get_db()
     cursor = db.cursor(dictionary=True)
 
-    cursor.execute("""
-        SELECT
-            h.hotel_id,
-            h.hotel_name,
-            c.name AS city
-        FROM hotels h
-        JOIN cities c ON c.city_id = h.city_id
-        WHERE h.is_active = 1
-        ORDER BY c.name
-    """)
-
+    cursor.execute("SELECT * FROM hotels")
     hotels = cursor.fetchall()
+
     cursor.close()
+    db.close()
 
     return render_template("index.html", hotels=hotels)
+
 
 @app.route('/about')
 def about():
@@ -186,7 +193,7 @@ def hotels():
     searched_city = (request.args.get("city") or "").strip()
     room = (request.args.get("room") or "").strip().upper()
     checkin = (request.args.get("checkin") or "").strip()  
-
+    db = get_db()
     cursor = db.cursor(dictionary=True)
 
     sql = """
@@ -218,6 +225,7 @@ def hotels():
     cursor.execute(sql, tuple(params))
     hotels_list = cursor.fetchall()
     cursor.close()
+    db.close()
 
     city_images = {
         "Aberdeen": "aberdeen.jpg",
@@ -257,10 +265,18 @@ def login():
         email = request.form['email']
         password = request.form['password']
 
+        db = get_db()
         cursor = db.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM users WHERE email=%s AND is_active=%s", (email, 1))
+
+        cursor.execute(
+        "SELECT * FROM users WHERE email=%s AND is_active=%s",
+        (email, 1)
+        )
         user = cursor.fetchone()
+
         cursor.close()
+        db.close()
+
 
         if user and check_password_hash(user['password_hash'], password):
             session['loggedin'] = True
@@ -287,6 +303,7 @@ def login():
 @app.route('/admin/dashboard')
 def admin_dashboard():
     if session.get('loggedin') and session.get('role') == 'ADMIN':
+        db = get_db()
         cursor = db.cursor(dictionary=True)
         cursor.execute("""
             SELECT user_id, first_name, last_name, email, role, is_active
@@ -297,7 +314,8 @@ def admin_dashboard():
         return render_template('admin/admin_dashboard.html',
                                users=users,
                                total_users=total_users)
-
+    cursor.close()
+    db.close()
     return redirect(url_for('login'))
 
 
@@ -307,7 +325,7 @@ def user_dashboard():
         return redirect(url_for('login'))
 
     tab = (request.args.get("tab") or "all").lower().strip()  
-
+    db = get_db()
     cursor = db.cursor(dictionary=True)
 
     cursor.execute("""
@@ -320,6 +338,7 @@ def user_dashboard():
 
     if not me:
         cursor.close()
+        db.close()
         session.clear()
         return redirect(url_for("login"))
 
@@ -358,6 +377,7 @@ def user_dashboard():
     all_bookings = cursor.fetchall() or []
 
     cursor.close()
+    db.close()
 
     for b in all_bookings:
         if b.get("total_in_currency") is None:
@@ -391,6 +411,8 @@ def logout():
 def register():
     msg = ''
     if request.method == 'POST':
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
         try:
             first_name = request.form.get('first_name', '').strip()
             last_name  = request.form.get('last_name', '').strip()
@@ -401,21 +423,17 @@ def register():
                 flash("Please fill in all fields.", "danger")
                 return render_template("register.html", msg="Please fill in all fields.")
 
-            cursor = db.cursor(dictionary=True)
             cursor.execute("SELECT user_id FROM users WHERE email=%s", (email,))
             if cursor.fetchone():
-                cursor.close()
                 flash("An account already exists with this email.", "warning")
                 return render_template("register.html", msg="Account already exists with this email.")
 
             hashed_password = generate_password_hash(password, method="pbkdf2:sha256")
-
             cursor.execute("""
                 INSERT INTO users (first_name, last_name, email, password_hash, role, is_active)
                 VALUES (%s, %s, %s, %s, 'CUSTOMER', 0)
             """, (first_name, last_name, email, hashed_password))
             db.commit()
-            cursor.close()
 
             token = serializer.dumps(email, salt='email-confirm')
             link = url_for('activate', token=token, _external=True)
@@ -424,9 +442,7 @@ def register():
                 email_msg = Message('Activate Your Account', recipients=[email])
                 email_msg.body = f'Click the link to activate your account:\n{link}'
                 mail.send(email_msg)
-
                 flash("Registration successful! Please check your email to activate your account.", "success")
-
             except Exception as e:
                 print("MAIL ERROR:", e)
                 flash("Registered, but email failed. Please contact support.", "warning")
@@ -434,9 +450,13 @@ def register():
             return redirect(url_for('login'))
 
         except Exception as e:
-            print("REGISTER ERROR:", e)
-            flash("Something went wrong. Please try again.", "danger")
+            import traceback
+            traceback.print_exc()  # <-- IMPORTANT so you see the real cause
+            flash(f"Register failed: {e}", "danger")
             return render_template("register.html", msg="Server error")
+
+        finally:
+            cursor.close()
 
     return render_template("register.html", msg=msg)
 
@@ -447,21 +467,24 @@ def activate(token):
     except:
         flash("Activation link expired. Please register again.", "danger")
         return redirect(url_for('register'))
-
+    db = get_db()
     cursor = db.cursor()
     cursor.execute("UPDATE users SET is_active=1 WHERE email=%s", (email,))
     db.commit()
     cursor.close()
+    db.close()
 
     flash("Account activated successfully! You can now log in.", "success")
     return redirect(url_for('login'))
 
 @app.route('/user')
 def user():
+    db = get_db()
     cursor = db.cursor(dictionary=True)
     cursor.execute("SELECT first_name, last_name, email, role, is_active FROM users")
     users = cursor.fetchall()
     cursor.close()
+    db.close()
     return render_template("user.html", users=users)
 
 @app.route('/profile', methods=['GET', 'POST'])
@@ -471,7 +494,7 @@ def profile():
 
     user_id = session.get('user_id')
     msg = ""
-
+    db = get_db()
     cursor = db.cursor(dictionary=True)
 
     if request.method == 'POST':
@@ -520,6 +543,7 @@ def profile():
     """, (user_id,))
     me = cursor.fetchone()
     cursor.close()
+    db.close()
 
     return render_template("profile.html", me=me, msg=msg)
 
@@ -530,7 +554,7 @@ def hotel_details(hotel_id):
     checkin_date = parse_checkin_arg(checkin_str)            
     if not checkin_date:
         checkin_date = date.today()  
-
+    db = get_db()
     cursor = db.cursor(dictionary=True)
 
     cursor.execute("""
@@ -544,6 +568,7 @@ def hotel_details(hotel_id):
     hotel = cursor.fetchone()
     if not hotel:
         cursor.close()
+        db.close()
         return "Hotel not found", 404
 
     cursor.execute("""
@@ -567,6 +592,7 @@ def hotel_details(hotel_id):
     """, (hotel_id,))
     features_rows = cursor.fetchall()
     cursor.close()
+    db.close()
 
     features_map = {r["room_code"]: r["features"] for r in features_rows}
 
@@ -605,7 +631,7 @@ def room_details(hotel_id, room_code):
     checkin_date = parse_checkin_arg(checkin_str)            
     if not checkin_date:
         checkin_date = date.today()
-
+    db = get_db()
     cursor = db.cursor(dictionary=True)
 
     cursor.execute("""
@@ -621,6 +647,7 @@ def room_details(hotel_id, room_code):
     hotel = cursor.fetchone()
     if not hotel:
         cursor.close()
+        db.close()
         return "Hotel not found", 404
 
     cursor.execute("""
@@ -636,6 +663,7 @@ def room_details(hotel_id, room_code):
     room = cursor.fetchone()
     if not room:
         cursor.close()
+        db.close()
         return "Room type not found", 404
 
     cursor.execute("""
@@ -648,6 +676,7 @@ def room_details(hotel_id, room_code):
     """, (hotel_id, room_code))
     features = [row["name"] for row in cursor.fetchall()]
     cursor.close()
+    db.close()
 
     room_images = {
         "STANDARD": "images/rooms/standard.jpg",
@@ -759,7 +788,7 @@ def book(hotel_id):
 
         if (check_in - today).days > 90:
             return "Bookings allowed only up to 90 days in advance.", 400
-
+        db = get_db()
         cursor = db.cursor()
 
         args = [
@@ -806,6 +835,7 @@ def book(hotel_id):
 
         db.commit()
         cursor.close()
+        db.close()
 
         # success notification
         payment_labels = {
@@ -833,7 +863,7 @@ def cancel_booking(booking_id):
     try:
         reason = (request.form.get('reason') or "").strip()
         delete_after = request.form.get('delete_after') == "1"
-
+        db = get_db()
         cursor = db.cursor(dictionary=True)
 
         # make sure this booking belongs to the logged-in user
@@ -841,6 +871,7 @@ def cancel_booking(booking_id):
         row = cursor.fetchone()
         if not row or row["user_id"] != session["user_id"]:
             cursor.close()
+            db.close()
             return "Not allowed", 403
 
         # 1) cancel using stored procedure
@@ -857,7 +888,9 @@ def cancel_booking(booking_id):
 
         db.commit()
         cursor2.close()
+        db.close()
         cursor.close()
+        db.close()
 
         return redirect(url_for('user_dashboard'))
 
@@ -873,6 +906,7 @@ def delete_booking(booking_id):
         return redirect(url_for('login'))
 
     try:
+        db = get_db()
         cursor = db.cursor(dictionary=True)
 
         # only allow deleting your own booking
@@ -885,16 +919,19 @@ def delete_booking(booking_id):
 
         if not b or b["user_id"] != session["user_id"]:
             cursor.close()
+            db.close()
             return "Not allowed", 403
 
         # (recommended) only delete if already cancelled
         if b["booking_status"] != "CANCELLED":
             cursor.close()
+            db.close()
             return "You can only delete cancelled bookings.", 400
 
         cursor.execute("DELETE FROM bookings WHERE booking_id=%s AND user_id=%s", (booking_id, session["user_id"]))
         db.commit()
         cursor.close()
+        db.close()
 
         return redirect(url_for('user_dashboard'))
 
@@ -910,6 +947,7 @@ def payment(booking_id):
         return redirect(url_for('login'))
 
     msg = ""
+    db = get_db()
     cursor = db.cursor(dictionary=True)
 
     # make sure booking belongs to user
@@ -927,11 +965,13 @@ def payment(booking_id):
 
     if not summary or summary["user_id"] != session["user_id"]:
         cursor.close()
+        db.close()
         return "Not allowed", 403
 
     # if already paid/confirmed
     if summary["booking_status"] == "CONFIRMED":
         cursor.close()
+        db.close()
         return redirect(url_for("user_dashboard"))
 
     if request.method == "POST":
@@ -959,10 +999,12 @@ def payment(booking_id):
 
             db.commit()
             cursor.close()
+            db.close()
 
             return redirect(url_for("user_dashboard"))
 
     cursor.close()
+    db.close()
     return render_template("payment.html", summary=summary, msg=msg)
 
 @app.route("/admin/search")
@@ -976,6 +1018,7 @@ def admin_search():
         return jsonify({"cities": [], "rooms": [], "users": []})
 
     like = f"%{q}%"
+    db = get_db()
     cursor = db.cursor(dictionary=True)
 
     # Cities
@@ -1011,13 +1054,14 @@ def admin_search():
     users = cursor.fetchall()
 
     cursor.close()
+    db.close()
     return jsonify({"cities": cities, "rooms": rooms, "users": users})
 
 @app.route("/receipt/<int:booking_id>")
 def receipt(booking_id):
     if not session.get("loggedin"):
         return redirect(url_for("login"))
-
+    db = get_db()
     cursor = db.cursor(dictionary=True)
     cursor.execute("""
         SELECT
@@ -1036,6 +1080,7 @@ def receipt(booking_id):
     """, (booking_id,))
     r = cursor.fetchone()
     cursor.close()
+    db.close()
 
     if not r:
         return "Receipt not found", 404
@@ -1050,7 +1095,7 @@ def receipt(booking_id):
 def receipt_pdf(booking_id):
     if not session.get("loggedin"):
         return redirect(url_for("login"))
-
+    db = get_db()
     cursor = db.cursor(dictionary=True)
     cursor.execute("""
         SELECT
@@ -1069,6 +1114,7 @@ def receipt_pdf(booking_id):
     """, (booking_id,))
     r = cursor.fetchone()
     cursor.close()
+    db.close()
 
     if not r:
         return "Receipt not found", 404
@@ -1146,7 +1192,7 @@ def admin_users():
 
     q = (request.args.get("q") or "").strip()
     like = f"%{q}%"
-
+    db = get_db()
     cursor = db.cursor(dictionary=True)
 
     if q:
@@ -1170,6 +1216,7 @@ def admin_users():
     total_users = cursor.fetchone()["n"]
 
     cursor.close()
+    db.close()
 
     return render_template("admin/admin_users.html", users=users, total_users=total_users)
 
@@ -1190,11 +1237,12 @@ def admin_users_add():
     if not first_name or not last_name or not email or len(password) < 8:
         flash("Please fill all fields (password min 8 chars).", "danger")
         return redirect(url_for("admin_users"))
-
+    db = get_db()
     cursor = db.cursor(dictionary=True)
     cursor.execute("SELECT user_id FROM users WHERE email=%s", (email,))
     if cursor.fetchone():
         cursor.close()
+        db.close()
         flash("That email already exists.", "warning")
         return redirect(url_for("admin_users"))
 
@@ -1207,7 +1255,9 @@ def admin_users_add():
     """, (role, first_name, last_name, email, hashed))
     db.commit()
     cursor2.close()
+    db.close()
     cursor.close()
+    db.close()
 
     flash("User created successfully.", "success")
     return redirect(url_for("admin_users"))
@@ -1223,11 +1273,12 @@ def admin_users_toggle(user_id):
 
     action = (request.form.get("action") or "").lower()
     new_value = 1 if action == "activate" else 0
-
+    db = get_db()
     cursor = db.cursor()
     cursor.execute("UPDATE users SET is_active=%s WHERE user_id=%s", (new_value, user_id))
     db.commit()
     cursor.close()
+    db.close()
 
     flash("User status updated.", "success")
     return redirect(url_for("admin_users"))
@@ -1242,10 +1293,12 @@ def admin_users_delete(user_id):
         return redirect(url_for("admin_users"))
 
     try:
+        db = get_db()
         cursor = db.cursor()
         cursor.execute("DELETE FROM users WHERE user_id=%s", (user_id,))
         db.commit()
         cursor.close()
+        db.close()
         flash("User deleted.", "success")
     except Exception as e:
         flash(f"Cannot delete this user (they may have bookings). Deactivate instead. ({e})", "warning")
@@ -1259,6 +1312,7 @@ def admin_staffs():
 
     q = (request.args.get("q") or "").strip()
     like = f"%{q}%"
+    db = get_db()
     cursor = db.cursor(dictionary=True)
 
     if q:
@@ -1277,6 +1331,7 @@ def admin_staffs():
         """)
     staffs = cursor.fetchall()
     cursor.close()
+    db.close()
 
     return render_template("admin/admin_staffs.html", staffs=staffs)
 
@@ -1287,6 +1342,7 @@ def admin_rooms():
         return redirect(url_for('login'))
 
     q = (request.args.get("q") or "").strip().upper()
+    db = get_db()
     cursor = db.cursor(dictionary=True)
 
     if q:
@@ -1314,6 +1370,7 @@ def admin_rooms():
     inventory_rows = cursor.fetchone()["n"]
 
     cursor.close()
+    db.close()
 
     return render_template("admin/admin_rooms.html",
                            room_types=room_types,
@@ -1328,7 +1385,7 @@ def admin_reservations():
 
     q = (request.args.get("q") or "").strip()
     like = f"%{q}%"
-
+    db = get_db()
     cursor = db.cursor(dictionary=True)
 
     base_sql = """
@@ -1362,6 +1419,7 @@ def admin_reservations():
     cancelled_bookings = cursor.fetchone()["n"]
 
     cursor.close()
+    db.close()
 
     return render_template("admin/admin_reservations.html",
                            bookings=bookings,
@@ -1373,7 +1431,7 @@ def admin_reservations():
 def admin_analytics():
     if not (session.get('loggedin') and session.get('role') == 'ADMIN'):
         return redirect(url_for('login'))
-
+    db = get_db()
     cursor = db.cursor(dictionary=True)
 
     cursor.execute("SELECT COALESCE(SUM(total_gbp),0) AS revenue FROM bookings WHERE booking_status='CONFIRMED'")
@@ -1401,6 +1459,7 @@ def admin_analytics():
     top_cities = cursor.fetchall()
 
     cursor.close()
+    db.close()
 
     return render_template("admin/admin_analytics.html",
                            revenue_gbp=revenue_gbp,
@@ -1417,13 +1476,16 @@ def admin_reports():
     return render_template("admin/admin_reports.html")
 
 def get_setting(key, default=None):
+    db = get_db()
     cursor = db.cursor(dictionary=True)
     cursor.execute("SELECT setting_value FROM site_settings WHERE setting_key=%s LIMIT 1", (key,))
     row = cursor.fetchone()
     cursor.close()
+    db.close()
     return row["setting_value"] if row else default
 
 def set_setting(key, value):
+    db = get_db()
     cursor = db.cursor()
     cursor.execute("""
         INSERT INTO site_settings (setting_key, setting_value)
@@ -1432,7 +1494,7 @@ def set_setting(key, value):
     """, (key, value))
     db.commit()
     cursor.close()
-
+    db.close()
 
 @app.route("/admin/settings", methods=["GET", "POST"])
 def admin_settings():
@@ -1540,7 +1602,7 @@ def resolve_season(checkin_str: Optional[str], season_override: str) -> bool:
 def admin_cancel_booking(booking_id):
     if not (session.get("loggedin") and session.get("role") == "ADMIN"):
         return redirect(url_for("login"))
-
+    db = get_db()
     cursor = db.cursor()
 
     cursor.execute("""
@@ -1551,6 +1613,7 @@ def admin_cancel_booking(booking_id):
     db.commit()
 
     cursor.close()
+    db.close()
 
     flash("Booking cancelled (admin).", "success")
     return redirect(url_for("admin_reservations"))  
@@ -1560,12 +1623,13 @@ def admin_cancel_booking(booking_id):
 def admin_delete_booking(booking_id):
     if not (session.get("loggedin") and session.get("role") == "ADMIN"):
         return redirect(url_for("login"))
-
+    db = get_db()
     cursor = db.cursor()
     cursor.execute("DELETE FROM bookings WHERE booking_id = %s", (booking_id,))
     db.commit()
 
     cursor.close()
+    db.close()
 
     flash("Booking deleted permanently (admin).", "success")
     return redirect(url_for("admin_reservations"))
@@ -1582,10 +1646,12 @@ def show_demo_notice():
 
 @app.route("/db-test")
 def db_test():
+    db = get_db()
     cur = db.cursor()
     cur.execute("SELECT DATABASE(), @@hostname, @@port")
     row = cur.fetchone()
     cur.close()
+    db.close()
     return f"Connected to DB={row[0]}, host={row[1]}, port={row[2]}"
 
 if __name__== '__main__':

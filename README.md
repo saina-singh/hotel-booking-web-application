@@ -1,4 +1,5 @@
 World Hotels — Hotel Booking Web Application
+
 Project Overview
 
 World Hotels is a full-stack hotel booking web application developed as an academic project.

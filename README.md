@@ -132,4 +132,5 @@ This project is not affiliated with any real hotel brand
 Author:
 
 Developed by Saina Singh
+
 Academic Project — 2025 / 2026
